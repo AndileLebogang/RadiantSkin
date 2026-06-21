@@ -109,6 +109,19 @@ public class HairCareProduct extends Product{
             return this;
         }
 
+        public Builder copy(HairCareProduct hairCareProduct) {
+            this.productId = hairCareProduct.productId;
+            this.name = hairCareProduct.name;
+            this.description = hairCareProduct.description;
+            this.brand = hairCareProduct.brand;
+            this.price = hairCareProduct.price;
+            this.stockQuantity = hairCareProduct.stockQuantity;
+            this.imageUrl = hairCareProduct.imageUrl;
+            this.volumeMl = hairCareProduct.volumeMl;
+            this.hairConcern = hairCareProduct.hairConcern;
+            return this;
+        }
+
         public HairCareProduct build() {
             return new HairCareProduct(this);
         }
