@@ -109,6 +109,19 @@ public class BodyCareProduct extends Product {
             return this;
         }
 
+        public Builder copy(BodyCareProduct bodyCareProduct){
+            this.productId = bodyCareProduct.productId;
+            this.name = bodyCareProduct.name;
+            this.description = bodyCareProduct.description;
+            this.brand = bodyCareProduct.brand;
+            this.price = bodyCareProduct.price;
+            this.stockQuantity = bodyCareProduct.stockQuantity;
+            this.imageUrl = bodyCareProduct.imageUrl;
+            this.volumeMl = bodyCareProduct.volumeMl;
+            this.skinConcern = bodyCareProduct.skinConcern;
+            return this;
+        }
+
         public BodyCareProduct build() {
             return new BodyCareProduct(this);
         }
