@@ -1,3 +1,11 @@
+/* OrderItem.java
+
+        Order Item POJO class
+
+        Author: La-eeq Lewis (240696255)
+
+        Date: 21 June 2026 */
+
 package ac.za.mycput.domain;
 
 import jakarta.persistence.*;
