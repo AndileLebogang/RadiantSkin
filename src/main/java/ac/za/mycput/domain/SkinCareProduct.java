@@ -1,6 +1,6 @@
-/* Employee.java
+/* ESkinCareProduct.java
 
-     Employee POJO class
+     SkinCareProduct POJO class
 
      Author: Samkelo Mahlangu (230064019)
 
@@ -8,13 +8,18 @@
 
 package ac.za.mycput.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import java.math.BigDecimal;
 
+@Entity
+@DiscriminatorValue("SKIN")
 public class SkinCareProduct extends Product {
 
     private String usageInstructions;
 
     public SkinCareProduct() {
+        super();
     }
 
     private SkinCareProduct(Builder builder) {
@@ -24,8 +29,8 @@ public class SkinCareProduct extends Product {
         this.brand = builder.brand;
         this.price = builder.price;
         this.stockQuantity = builder.stockQuantity;
-        this.imageURL = builder.imageURL;
-        this.VolumeMl = builder.VolumeMl;
+        this.imageUrl = builder.imageUrl;
+        this.volumeMl = builder.volumeMl;
         this.usageInstructions = builder.usageInstructions;
     }
 
@@ -33,18 +38,33 @@ public class SkinCareProduct extends Product {
         return usageInstructions;
     }
 
+    @Override
+    public String toString() {
+        return "SkinCareProduct{" +
+                "name='" + name + '\'' +
+                ", usageInstructions='" + usageInstructions + '\'' +
+                ", productId=" + productId +
+                ", description='" + description + '\'' +
+                ", brand='" + brand + '\'' +
+                ", price=" + price +
+                ", stockQuantity=" + stockQuantity +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", volumeMl=" + volumeMl +
+                '}';
+    }
+
     public static class Builder {
-        private String productId;
+        private Long productId;
         private String name;
         private String description;
         private String brand;
         private BigDecimal price;
         private int stockQuantity;
-        private String imageURL;
-        private int VolumeMl;
+        private String imageUrl;
+        private int volumeMl;
         private String usageInstructions;
 
-        public Builder setProductId(String productId) {
+        public Builder setProductId(Long productId) {
             this.productId = productId;
             return this;
         }
@@ -74,13 +94,13 @@ public class SkinCareProduct extends Product {
             return this;
         }
 
-        public Builder setImageURL(String imageURL) {
-            this.imageURL = imageURL;
+        public Builder setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
             return this;
         }
 
         public Builder setVolumeMl(int volumeMl) {
-            this.VolumeMl = volumeMl;
+            this.volumeMl = volumeMl;
             return this;
         }
 

@@ -1,6 +1,6 @@
-/* Employee.java
+/* HairCareProduct.java
 
-     Employee POJO class
+     HairCareProduct POJO class
 
      Author: Samkelo Mahlangu (230064019)
 
@@ -8,13 +8,18 @@
 
 package ac.za.mycput.domain;
 
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import java.math.BigDecimal;
 
+@Entity
+@DiscriminatorValue("HAIR")
 public class HairCareProduct extends Product{
 
     private String hairConcern;
 
     public HairCareProduct() {
+        super();
     }
 
     private HairCareProduct(Builder builder) {
@@ -24,8 +29,8 @@ public class HairCareProduct extends Product{
         this.brand = builder.brand;
         this.price = builder.price;
         this.stockQuantity = builder.stockQuantity;
-        this.imageURL = builder.imageURL;
-        this.VolumeMl = builder.VolumeMl;
+        this.imageUrl = builder.imageUrl;
+        this.volumeMl = builder.volumeMl;
         this.hairConcern = builder.hairConcern;
     }
 
@@ -33,18 +38,33 @@ public class HairCareProduct extends Product{
         return hairConcern;
     }
 
+    @Override
+    public String toString() {
+        return "HairCareProduct{" +
+                "hairConcern='" + hairConcern + '\'' +
+                ", productId=" + productId +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", brand='" + brand + '\'' +
+                ", price=" + price +
+                ", stockQuantity=" + stockQuantity +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", volumeMl=" + volumeMl +
+                '}';
+    }
+
     public static class Builder {
-        private String productId;
+        private Long productId;
         private String name;
         private String description;
         private String brand;
         private BigDecimal price;
         private int stockQuantity;
-        private String imageURL;
-        private int VolumeMl;
+        private String imageUrl;
+        private int volumeMl;
         private String hairConcern;
 
-        public Builder setProductId(String productId) {
+        public Builder setProductId(Long productId) {
             this.productId = productId;
             return this;
         }
@@ -74,13 +94,13 @@ public class HairCareProduct extends Product{
             return this;
         }
 
-        public Builder setImageURL(String imageURL) {
-            this.imageURL = imageURL;
+        public Builder setImageUrl(String imageUrl) {
+            this.imageUrl = imageUrl;
             return this;
         }
 
         public Builder setVolumeMl(int volumeMl) {
-            this.VolumeMl = volumeMl;
+            this.volumeMl = volumeMl;
             return this;
         }
 

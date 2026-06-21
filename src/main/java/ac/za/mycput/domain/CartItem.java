@@ -8,11 +8,23 @@
 
 package ac.za.mycput.domain;
 
-public class CartItem {
+@Entity
+public class CartItem  {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cartItem;
+
     private int quantity;
+
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    private Cart cart;
+
     private Product product;
+
+    private CartItem() {
+    }
 
     private CartItem(Builder builder) {
         this.cartItem = builder.cartItem;
@@ -38,24 +50,9 @@ public class CartItem {
         private int quantity;
         private Product product;
 
-        public Builder setCartItem(Long cartItem) {
-            this.cartItem = cartItem;
-            return this;
-        }
 
-        public Builder setQuantity(int quantity) {
-            this.quantity = quantity;
-            return this;
-        }
-
-        public Builder setProduct(Product product) {
-            this.product = product;
-            return this;
-        }
-
-        /**
+        /*
          * Builds and returns a CartItem object.
-         *
          */
         public CartItem build() {
             return new CartItem(this);
