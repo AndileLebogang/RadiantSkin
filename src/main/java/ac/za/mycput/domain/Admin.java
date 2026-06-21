@@ -1,5 +1,12 @@
-package ac.za.mycput.domain;
+/* Admin.java
 
+     Admin POJO class
+
+     Author: Nonhlanhla Hazel Mahlangu (222687290)
+
+     Date: 21 June 2026 */
+
+package ac.za.mycput.domain;
 import jakarta.persistence.Entity;
 
 @Entity
@@ -30,8 +37,6 @@ public class Admin extends User{
         return "Admin [employeeNumber=" + employeeNumber + ", userId=" + userId + ", firstName=" + firstName
                 + ", lastName=" + lastName + ", email=" + email + ", password=" + password + "]";
     }
-
-
 
     public static class Builder{
         private String employeeNumber;

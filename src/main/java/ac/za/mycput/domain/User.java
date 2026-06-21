@@ -1,21 +1,20 @@
+/* User.java
+
+     User POJO class
+
+     Author: Nonhlanhla Hazel Mahlangu (222687290)
+
+     Date: 21 June 2026 */
+
+
 package ac.za.mycput.domain;
 
-
-
-
-
 import jakarta.persistence.Entity;
-
 import jakarta.persistence.GeneratedValue;
-
 import jakarta.persistence.GenerationType;
-
 import jakarta.persistence.Id;
-
 import jakarta.persistence.Inheritance;
-
 import jakarta.persistence.InheritanceType;
-
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
