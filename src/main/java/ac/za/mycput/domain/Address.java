@@ -33,7 +33,7 @@ public class Address {
         this.province = builder.province;
         this.postalCode = builder.postalCode;
         this.country = builder.country;
-
+        this.customer = builder.customer;
     }
 
     public Long getAddressId() {
@@ -60,6 +60,10 @@ public class Address {
         return country;
     }
 
+    public Customer getCustomer() {
+        return customer;
+    }
+
     public static class Builder {
         private Long addressId;
         private String street;
@@ -67,6 +71,7 @@ public class Address {
         private String province;
         private String postalCode;
         private String country ;
+        private Customer customer;
 
         public Builder setAddressId(Long addressId){
             this.addressId = addressId;
@@ -92,7 +97,21 @@ public class Address {
             this.country = country;
             return this;
         }
+        public Builder setCustomer(Customer customer){
+            this.customer = customer;
+            return this;
+        }
 
+        public Builder copy(Address address){
+        this.addressId = address.addressId;
+        this.street = address.street;
+        this.city = address.city;
+        this.province = address.postalCode;
+        this.country = address.country;
+        this.customer = address.customer;
+        return this;
+
+        }
         public Address build(){
             return new Address(this);
         }

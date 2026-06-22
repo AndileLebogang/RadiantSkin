@@ -18,13 +18,12 @@ public class Review {
     private String comment;
     private LocalDate reviewDate;
 
-    //MANY REVIEWS → One product
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
-    //MANY reviews → One customer
-    //link with customer class when available
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -36,7 +35,8 @@ public class Review {
         this. rating = builder.rating;
         this.comment = builder.comment;
         this.reviewDate = builder.reviewDate;
-
+        this.product = builder.product;
+        this.customer = builder.customer;
     }
 
     public Long getReviewId() {
@@ -55,11 +55,21 @@ public class Review {
         return reviewDate;
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
     public static class Builder{
         private Long reviewId;
         private int rating;
         private String comment;
         private LocalDate reviewDate;
+        private Product product;
+        private Customer customer;
 
         public Builder setReviewId(Long reviewId){
             this.reviewId = reviewId;
@@ -78,6 +88,24 @@ public class Review {
 
         public Builder setReviewDate(LocalDate reviewDate){
             this.reviewDate = reviewDate;
+            return this;
+        }
+        public Builder setProduct(Product product){
+            this.product = product;
+            return this;
+        }
+        public Builder setCustomer (Customer customer ){
+            this.customer = customer;
+            return this;
+        }
+
+        public Builder copy(Review review){
+            this.reviewId = review.reviewId;
+            this.rating = review.rating;
+            this.comment = review.comment;
+            this.reviewDate = review.reviewDate;
+            this.product= review.product;
+            this.customer = review.customer;
             return this;
         }
 
