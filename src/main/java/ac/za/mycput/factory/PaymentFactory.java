@@ -9,23 +9,19 @@ import ac.za.mycput.util.Helper;
 
 public class PaymentFactory {
 
-    public static Payment createPayment(Long paymentId, double amount, PaymentStatus paymentStatus, PaymentMethod paymentMethod, String transactionReference){
+    public static Payment createPayment(Long paymentId, double amount,
+                                        PaymentStatus paymentStatus,
+                                        PaymentMethod paymentMethod,
+                                        String transactionReference) {
 
-        if(!Helper.isValidPaymentId(paymentId)){
+        if (!Helper.isValidId(paymentId) ||
+                !Helper.isValidAmount(amount) ||
+                !Helper.isValidTransactionReference(transactionReference) ||
+                paymentStatus == null ||
+                paymentMethod == null) {
             return null;
         }
-        if(!Helper.isValidAmount(amount)){
-            return null;
-        }
-        if (!Helper.isValidTransactionReference(transactionReference)) {
-            return null;
-        }
-        if (paymentStatus == null) {
-            return null;
-        }
-        if (paymentMethod == null) {
-            return null;
-        }
+
         return new Payment.Builder()
                 .setPaymentId(paymentId)
                 .setAmount(amount)
@@ -33,6 +29,5 @@ public class PaymentFactory {
                 .setPaymentMethod(paymentMethod)
                 .setTransactionReference(transactionReference)
                 .build();
-
     }
 }
