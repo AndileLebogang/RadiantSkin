@@ -7,26 +7,19 @@ import ac.za.mycput.util.Helper;
 
 public class CustomerFactory {
 
-    public static Customer createCustomer(Long userId, String firstName, String lastName, String email, String password, String phoneNumber){
-        if (Helper.isNullEmpty(firstName)) {
+    public static Customer createCustomer(Long userId, String firstName, String lastName,
+                                          String email, String password, String phoneNumber) {
+
+        if (!Helper.isValidId(userId) ||
+                Helper.isNullEmpty(firstName) ||
+                Helper.isNullEmpty(lastName) ||
+                Helper.isNullEmpty(email) ||
+                !Helper.isValidEmail(email) ||
+                Helper.isNullEmpty(password) ||
+                !Helper.isValidPhoneNumber(phoneNumber)) {
             return null;
         }
 
-        if (Helper.isNullEmpty(lastName)) {
-            return null;
-        }
-        if (Helper.isNullEmpty(email) || !Helper.isValidEmail(email)) {
-            return null;
-        }
-        if(!Helper.isValidUserId(userId)){
-            return null;
-        }
-        if (Helper.isNullEmpty(password)) {
-            return null;
-        }
-        if(!Helper.isValidPhoneNumber(phoneNumber)){
-            return null;
-        }
         return new Customer.Builder()
                 .setUserId(userId)
                 .setFirstName(firstName)
@@ -36,4 +29,5 @@ public class CustomerFactory {
                 .setPhoneNumber(phoneNumber)
                 .build();
     }
+
 }
