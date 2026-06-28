@@ -1,20 +1,24 @@
-/* HairCareService.java
+/* SkinCareService.java
 
-     HairCareService POJO class
+     SkinCareService POJO class
 
      Author: Samkelo Mahlangu (230064019)
 
      Date: 28 June 2026 */
 
+
 package ac.za.mycput.factory;
 
-import ac.za.mycput.domain.HairCareProduct;
+import ac.za.mycput.domain.SkinCareProduct;
 import ac.za.mycput.util.Helper;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-public class HairCareService {
-    public static HairCareProduct createHairCareProduct(String name, String description, String brand, BigDecimal price, int stockQuantity, String imageUrl, int volumeMl, String hairConcern) {
+@Service
+public class SkinCareFactory {
+
+    public static SkinCareProduct createSkinCareProduct(String name, String description, String brand, BigDecimal price, int stockQuantity, String imageUrl, int volumeMl, String usageInstructions) {
         if (!Helper.isValidString(name)
                 || !Helper.isValidString(description)
                 || !Helper.isValidString(brand)
@@ -22,11 +26,11 @@ public class HairCareService {
                 || !Helper.isValidStockQuantity(stockQuantity)
                 || !Helper.isValidString(imageUrl)
                 || !Helper.isValidStockQuantity(volumeMl)
-                || !Helper.isValidString(hairConcern)) {
+                || !Helper.isValidString(usageInstructions)) {
             return null;
         }
 
-        return new HairCareProduct.Builder()
+        return new SkinCareProduct.Builder()
                 .setName(name)
                 .setDescription(description)
                 .setBrand(brand)
@@ -34,7 +38,7 @@ public class HairCareService {
                 .setStockQuantity(stockQuantity)
                 .setImageUrl(imageUrl)
                 .setVolumeMl(volumeMl)
-                .setHairConcern(hairConcern)
+                .setUsageInstructions(usageInstructions)
                 .build();
     }
 }
