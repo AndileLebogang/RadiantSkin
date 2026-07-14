@@ -34,7 +34,7 @@ public class Payment {
         this.order = builder.order;
     }
 
-    public Long getPaymentID() {
+    public Long getPaymentId() {
         return paymentId;
     }
 
