@@ -23,19 +23,19 @@ public class AdminController {
         return service.create(admin);
     }
 
-    @GetMapping("/read/{id}")
-    public Admin read(@PathVariable Long id) {
-        return service.read(id);
+    @GetMapping("/read/{userId}")
+    public Admin read(@PathVariable Long userId) {
+        return service.read(userId);
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Admin update(@RequestBody Admin admin) {
         return service.update(admin);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public boolean delete(@PathVariable Long id) {
-        return service.delete(id);
+    @DeleteMapping("/delete/{userId}")
+    public boolean delete(@PathVariable Long userId) {
+        return service.delete(userId);
     }
 
     @GetMapping("/getAll")

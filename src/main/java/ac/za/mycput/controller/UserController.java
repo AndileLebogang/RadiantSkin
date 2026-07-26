@@ -23,19 +23,19 @@ public class UserController {
         return service.create(user);
     }
 
-    @GetMapping("/read/{id}")
-    public User read(@PathVariable Long id) {
-        return service.read(id);
+    @GetMapping("/read/{userId}")
+    public User read(@PathVariable Long userId) {
+        return service.read(userId);
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public User update(@RequestBody User user) {
         return service.update(user);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public boolean delete(@PathVariable Long id) {
-        return service.delete(id);
+    @DeleteMapping("/delete/{userId}")
+    public boolean delete(@PathVariable Long userId) {
+        return service.delete(userId);
     }
 
     @GetMapping("/getAll")

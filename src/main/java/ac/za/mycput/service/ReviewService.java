@@ -15,6 +15,6 @@ public interface ReviewService {
     Optional<Review>read(Long id);
     Review update(Review review);
     void delete(Long id);
-    List<Review>getAll()
+    List<Review>getAll();
 
 }

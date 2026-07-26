@@ -15,7 +15,7 @@ public class ReviewFactory {
           Helper.isNullEmpty(comment)||
           reviewDate ==null||
           customer ==null||
-          product==null||){
+          product==null){
             return null;
         }
 
