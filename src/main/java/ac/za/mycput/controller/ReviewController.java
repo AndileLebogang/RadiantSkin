@@ -5,9 +5,7 @@ package ac.za.mycput.controller;
 // Student no :222868708
  */
 
-import ac.za.mycput.domain.Address;
 import ac.za.mycput.domain.Review;
-import ac.za.mycput.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +16,7 @@ import java .util.List;
 public class ReviewController {
 
     @Autowired
-    private ReviewService service
+    private ReviewService service;
 
     @PostMapping("/create")
     public Review create(@RequestBody Review review){
