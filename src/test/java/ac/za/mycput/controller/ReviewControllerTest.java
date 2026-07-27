@@ -8,98 +8,113 @@ package ac.za.mycput.controller;
 import ac.za.mycput.domain.Address;
 import ac.za.mycput.domain.Review;
 import ac.za.mycput.factory.ReviewFactory;
-import ac.za.mycput.service.ReviewService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.mockito.Mockito;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.server.LocalServerPort;
+import org.springframework.http.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT )
  class ReviewControllerTest {
 
   @Autowired
-  private Review Controller
-  reviewController;
-
-  @MockBean
-  private ReviewService addressService;
+  privateTestRestTemplate restTemplate;
 
   private Review review;
+  private String baseUrl;
 
   @BeforeEach
   void setUp() {
+
+   Customer customer = new Customer();
+   customer.setCustomerId(1L);
+   customer.setName("James");
+
+   Product product = new Product();
+   product.setProductId(1L);
+   product.setProductName("Laptop");
+
    review = ReviewFactory.createReview(
            1L,
            5,
            "Good Product",
            LocalDate.now(),
-           null,
-           null
-   );
+           customer,
+           product
 
+   );
+    baseUrl = "http://localhost:"+ port + "/review";
   }
 
   @Test
   void create() {
-   Mockito.when(reviewService.create(review)).thenReturn(review);
+   String url =baseUrl + "/create";
 
-   ResponseEntity<Review> response = reviewController.create(review);
-   AssertNotNull(response);
-   assertEquals(200, response.getStatusCodeValue());
-   assertEquals(review, response.getBody());
+   ResponseEntity<Review>response = restTemplate.postForEntity(url,review, Review.class);
+
+   assertNotNull(response);
+   assertEquals(HttpStatus.OK,response.getStatusCode());
 
   }
 
   @Test
   void read() {
-   Mockito.when(reviewService.read(1L)).thenReturn(review);
 
-   ResponseEntity<Review> response = reviewController.read(1L);
-   AssertNotNull(response);
-   assertEquals(200, response.getStatusCodeValue());
-   assertEquals(review, response.getBody());
+   ResponseEntity<Review>created = restTemplate.postForEntity(baseUrl+"/create",review, Review.class);
+   Review saved = created.getBody();
+
+   String Url = baseUrl +"/read" + saved.getReviewId();
+
+   ResponseEntity<Review>response = restTemplate.getForEntity(url,Review.class);
+
+   assertNotNull(response);
+   assertEquals(HttpStatus.OK,response.getStatusCode());
   }
 
   @Test
-  void update() {
-   Mockito.when(reviewService.update(review)).thenReturn(review);
+   void update() {
+   ResponseEntity<Review>created = restTemplate.postForEntity(baseUrl+"/create",review, Review.class);
+   Review saved = created.getBody();
 
-   ResponseEntity<Review> response = reviewController.update(review);
-   AssertNotNull(response);
-   assertEquals(200, response.getStatusCodeValue());
-   assertEquals(review, response.getBody());
+   Review updated = new Review.Builder();
+            .copy(saved)
+           .setComment("Updated comment")
+           .build()
 
+   String Url = baseUrl +"/update";
+
+   ResponseEntity<Review>response= restTemplate.postForEntity(url,updated,Review.class );
+
+   assertNotNull(response);
+   assertEquals(HttpStatus.OK,response.getStatusCode());
   }
 
   @Test
   void delete() {
-   Mockito.doNothing().when(reviewService).delete(1L);
+   restTemplate.postForEntity(baseUrl+"/create",review, Review.class);
 
-   ResponseEntity<Void> response = reviewController.delete(1L);
-   assertEquals(200, response.getStatusCodeValue());
-   assertEquals(review, response.getBody());
+   String url = baseUrl + "/delete"+review.getReviewId();
+   restTemplate.delete(url);
+
+   ResponseEntity<Review>response = restTemplate.postForEntity(baseUrl+"/read "+ review.getReviewId(), Review.class);
+
+   assertNotNull(response);
 
   }
 
   @Test
-  void getAll() {
-   Mockito.when(reviewService.getAll()).thenReturn(List.of(review));
+   void getAll() {
+   restTemplate.postForEntity(baseUrl+"/create",review, Review.class);
 
-   ResponseEntity<List<Review>> response = reviewController.getAll();
-   AssertNotNull(response);
+   ResponseEntity<Review[]> response = restTemplate.getForEntity(baseUrl+"/all",Review[].class );
 
-   assertEquals(200, response.getStatusCodeValue());
-   assertFalse(response.getBody().isEmpty());
-
+   assertNotNull(response);
+   assertTrue(response.getBody().length > 0);
   }
  }
