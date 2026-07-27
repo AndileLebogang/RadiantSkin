@@ -105,6 +105,17 @@ public class Customer extends User {
             this.cart = cart;
             return this;
         }
+        public Builder copy(Customer customer) {
+            this.userId = customer.getUserId();
+            this.firstName = customer.getFirstName();
+            this.lastName = customer.getLastName();
+            this.email = customer.getEmail();
+            this.password = customer.getPassword();
+            this.phoneNumber = customer.getPhoneNumber();
+            this.addresses = customer.getAddresses();
+            this.cart = customer.getCart();
+            return this;
+        }
 
         public Customer build() {
             return new Customer(this);

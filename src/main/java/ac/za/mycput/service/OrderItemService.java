@@ -12,54 +12,54 @@ import ac.za.mycput.domain.Order;
 import ac.za.mycput.domain.OrderItem;
 import ac.za.mycput.domain.Product;
 import ac.za.mycput.repository.OrderItemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class OrderItemService {
+public class OrderItemService implements IOrderItemService {
 
-    private final OrderItemRepository orderItemRepository;
+    private final OrderItemRepository repo;
 
-    public OrderItemService(OrderItemRepository orderItemRepository) {
-        this.orderItemRepository = orderItemRepository;
+    @Autowired
+    public OrderItemService(OrderItemRepository repo) {
+        this.repo = repo;
     }
 
-    public OrderItem save(OrderItem orderItem) {
-        if (orderItem == null) {
-            return null;
-        }
-        return orderItemRepository.save(orderItem);
+    @Override
+    public OrderItem create(OrderItem orderItem) {
+        return this.repo.save(orderItem);
     }
 
-    public OrderItem findById(Long orderItemId) {
-        if (orderItemId == null || orderItemId <= 0) {
-            return null;
-        }
-        return orderItemRepository.findById(orderItemId).orElse(null);
+    @Override
+    public OrderItem read(Long id) {
+        return this.repo.findById(id).orElse(null);
     }
 
-    public List<OrderItem> findAll() {
-        return orderItemRepository.findAll();
+    @Override
+    public OrderItem update(OrderItem orderItem) {
+        return this.repo.save(orderItem);
     }
 
+    @Override
+    public boolean delete(Long id) {
+        this.repo.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public List<OrderItem> getAll() {
+        return this.repo.findAll();
+    }
+
+    @Override
     public List<OrderItem> findByOrder(Order order) {
-        if (order == null) {
-            return null;
-        }
-        return orderItemRepository.findByOrder(order);
+        return this.repo.findByOrder(order);
     }
 
+    @Override
     public List<OrderItem> findByProduct(Product product) {
-        if (product == null) {
-            return null;
-        }
-        return orderItemRepository.findByProduct(product);
-    }
-
-    public void delete(Long orderItemId) {
-        if (orderItemId != null && orderItemId > 0) {
-            orderItemRepository.deleteById(orderItemId);
-        }
+        return this.repo.findByProduct(product);
     }
 }

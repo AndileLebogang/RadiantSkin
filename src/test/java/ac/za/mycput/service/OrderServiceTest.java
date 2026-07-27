@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
     @Mock
-    private OrderRepository orderRepository;
+    private OrderRepository repo;
 
     @InjectMocks
     private OrderService orderService;
@@ -64,113 +64,86 @@ class OrderServiceTest {
     }
 
     @Test
-    void testSave() {
-        when(orderRepository.save(testOrder)).thenReturn(testOrder);
+    void testCreate() {
+        when(repo.save(testOrder)).thenReturn(testOrder);
 
-        Order savedOrder = orderService.save(testOrder);
+        Order result = orderService.create(testOrder);
 
-        assertNotNull(savedOrder);
-        assertEquals(testOrder.getOrderId(), savedOrder.getOrderId());
-        verify(orderRepository, times(1)).save(testOrder);
+        assertNotNull(result);
+        assertEquals(testOrder.getOrderId(), result.getOrderId());
+        verify(repo, times(1)).save(testOrder);
     }
 
     @Test
-    void testSaveNullOrder() {
-        Order savedOrder = orderService.save(null);
+    void testRead() {
+        when(repo.findById(1001L)).thenReturn(Optional.of(testOrder));
 
-        assertNull(savedOrder);
-        verify(orderRepository, never()).save(any());
+        Order result = orderService.read(1001L);
+
+        assertNotNull(result);
+        assertEquals(1001L, result.getOrderId());
+        verify(repo, times(1)).findById(1001L);
     }
 
     @Test
-    void testFindById() {
-        when(orderRepository.findById(1001L)).thenReturn(Optional.of(testOrder));
+    void testReadNotFound() {
+        when(repo.findById(999L)).thenReturn(Optional.empty());
 
-        Order foundOrder = orderService.findById(1001L);
+        Order result = orderService.read(999L);
 
-        assertNotNull(foundOrder);
-        assertEquals(1001L, foundOrder.getOrderId());
-        verify(orderRepository, times(1)).findById(1001L);
+        assertNull(result);
+        verify(repo, times(1)).findById(999L);
     }
 
     @Test
-    void testFindByIdInvalid() {
-        Order foundOrder = orderService.findById(-1L);
+    void testUpdate() {
+        when(repo.save(testOrder)).thenReturn(testOrder);
 
-        assertNull(foundOrder);
-        verify(orderRepository, never()).findById(any());
+        Order result = orderService.update(testOrder);
+
+        assertNotNull(result);
+        assertEquals(testOrder.getOrderId(), result.getOrderId());
+        verify(repo, times(1)).save(testOrder);
     }
 
     @Test
-    void testFindByIdNotFound() {
-        when(orderRepository.findById(999L)).thenReturn(Optional.empty());
+    void testDelete() {
+        boolean result = orderService.delete(1001L);
 
-        Order foundOrder = orderService.findById(999L);
-
-        assertNull(foundOrder);
-        verify(orderRepository, times(1)).findById(999L);
+        assertTrue(result);
+        verify(repo, times(1)).deleteById(1001L);
     }
 
     @Test
-    void testFindAll() {
-        when(orderRepository.findAll()).thenReturn(List.of(testOrder));
+    void testGetAll() {
+        when(repo.findAll()).thenReturn(List.of(testOrder));
 
-        List<Order> orders = orderService.findAll();
+        List<Order> orders = orderService.getAll();
 
         assertNotNull(orders);
         assertEquals(1, orders.size());
-        verify(orderRepository, times(1)).findAll();
+        verify(repo, times(1)).findAll();
     }
 
     @Test
     void testFindByCustomer() {
-        when(orderRepository.findByCustomer(testCustomer)).thenReturn(List.of(testOrder));
+        when(repo.findByCustomer(testCustomer)).thenReturn(List.of(testOrder));
 
         List<Order> orders = orderService.findByCustomer(testCustomer);
 
         assertNotNull(orders);
         assertEquals(1, orders.size());
-        verify(orderRepository, times(1)).findByCustomer(testCustomer);
-    }
-
-    @Test
-    void testFindByCustomerNull() {
-        List<Order> orders = orderService.findByCustomer(null);
-
-        assertNull(orders);
-        verify(orderRepository, never()).findByCustomer(any());
+        verify(repo, times(1)).findByCustomer(testCustomer);
     }
 
     @Test
     void testFindByStatus() {
-        when(orderRepository.findByStatus(OrderStatus.PENDING)).thenReturn(List.of(testOrder));
+        when(repo.findByStatus(OrderStatus.PENDING)).thenReturn(List.of(testOrder));
 
         List<Order> orders = orderService.findByStatus(OrderStatus.PENDING);
 
         assertNotNull(orders);
         assertEquals(1, orders.size());
-        verify(orderRepository, times(1)).findByStatus(OrderStatus.PENDING);
-    }
-
-    @Test
-    void testFindByStatusNull() {
-        List<Order> orders = orderService.findByStatus(null);
-
-        assertNull(orders);
-        verify(orderRepository, never()).findByStatus(any());
-    }
-
-    @Test
-    void testDelete() {
-        orderService.delete(1001L);
-
-        verify(orderRepository, times(1)).deleteById(1001L);
-    }
-
-    @Test
-    void testDeleteInvalidId() {
-        orderService.delete(-1L);
-
-        verify(orderRepository, never()).deleteById(any());
+        verify(repo, times(1)).findByStatus(OrderStatus.PENDING);
     }
 }

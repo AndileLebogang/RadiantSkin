@@ -12,54 +12,54 @@ import ac.za.mycput.domain.Customer;
 import ac.za.mycput.domain.Order;
 import ac.za.mycput.domain.OrderStatus;
 import ac.za.mycput.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class OrderService {
+public class OrderService implements IOrderService {
 
-    private final OrderRepository orderRepository;
+    private final OrderRepository repo;
 
-    public OrderService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
+    @Autowired
+    public OrderService(OrderRepository repo) {
+        this.repo = repo;
     }
 
-    public Order save(Order order) {
-        if (order == null) {
-            return null;
-        }
-        return orderRepository.save(order);
+    @Override
+    public Order create(Order order) {
+        return this.repo.save(order);
     }
 
-    public Order findById(Long orderId) {
-        if (orderId == null || orderId <= 0) {
-            return null;
-        }
-        return orderRepository.findById(orderId).orElse(null);
+    @Override
+    public Order read(Long id) {
+        return this.repo.findById(id).orElse(null);
     }
 
-    public List<Order> findAll() {
-        return orderRepository.findAll();
+    @Override
+    public Order update(Order order) {
+        return this.repo.save(order);
     }
 
+    @Override
+    public boolean delete(Long id) {
+        this.repo.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public List<Order> getAll() {
+        return this.repo.findAll();
+    }
+
+    @Override
     public List<Order> findByCustomer(Customer customer) {
-        if (customer == null) {
-            return null;
-        }
-        return orderRepository.findByCustomer(customer);
+        return this.repo.findByCustomer(customer);
     }
 
+    @Override
     public List<Order> findByStatus(OrderStatus status) {
-        if (status == null) {
-            return null;
-        }
-        return orderRepository.findByStatus(status);
-    }
-
-    public void delete(Long orderId) {
-        if (orderId != null && orderId > 0) {
-            orderRepository.deleteById(orderId);
-        }
+        return this.repo.findByStatus(status);
     }
 }
