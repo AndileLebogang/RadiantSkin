@@ -13,7 +13,6 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.persistence.*;
 
 
 @Entity
@@ -25,15 +24,14 @@ public class Cart {
     private LocalDate createdDate;
 
     //One customer owns one cart
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
     private List<CartItem> cartItems;
 
-    private Cart() {
-
+    protected Cart() {
     }
 
     private Cart(Builder builder) {

@@ -1,9 +1,12 @@
 package ac.za.mycput.controller;
 
-import ac.za.mycput.domain.Cart;
+// Lebogang Andile Mahlangu 230561454 //
+
+import ac.za.mycput.domain.CartItem;
 import ac.za.mycput.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
