@@ -1,6 +1,7 @@
 package ac.za.mycput.factory;
 
 import ac.za.mycput.domain.Address;
+import ac.za.mycput.domain.Customer;
 import ac.za.mycput.util.Helper;
 /*
 * Name: Siphokazi Malingatshoni
@@ -23,14 +24,14 @@ public class AddressFactory {
             return null;
         }
             return new Address.Builder()
-                    .setAddressId(addressId)
-                    .setStreet(street)
-                    .setCity(city)
-                    .setProvince(province)
-                    .setPostalCode(postalCode)
-                    .setCountry(country)
-                    .setCustomer(customer)
-                    .build();
+                .setAddressId(addressId)
+                .setStreet(street)
+                .setCity(city)
+                .setProvince(province)
+                .setPostalCode(postalCode)
+                .setCountry(country)
+                .setCustomer(customer)
+                .build();
 
 
     }

@@ -38,24 +38,48 @@ public class Payment {
         return paymentId;
     }
 
+    public void setPaymentId(Long paymentId) {
+        this.paymentId = paymentId;
+    }
+
     public double getAmount() {
         return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
     }
 
     public String getTransactionReference() {
         return transactionReference;
     }
 
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
+    }
+
     public PaymentStatus getPaymentStatus() {
         return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 
     public PaymentMethod getPaymentMethod() {
         return paymentMethod;
     }
 
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
     public Order getOrder() {
         return order;
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
     }
 
     @Override

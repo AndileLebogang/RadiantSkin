@@ -1,6 +1,6 @@
 package ac.za.mycput.controller;
 
-import ac.za.mycput.domain.Cart;
+import ac.za.mycput.domain.CartItem;
 import ac.za.mycput.service.CartItemService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +37,7 @@ public class CartItemController {
         return service.delete(id);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/getAll")
     public List<CartItem> getAll() {
         return service.getAll();
     }

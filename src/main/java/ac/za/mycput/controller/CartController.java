@@ -37,7 +37,7 @@ public class CartController {
         return service.delete(id);
     }
 
-    @GetMapping("/all")
+    @GetMapping("/getAll")
     public List<Cart> getAll() {
         return service.getAll();
     }

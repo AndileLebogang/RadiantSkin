@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "orders")
 public class Order {
 
     @Id
@@ -52,28 +53,56 @@ public class Order {
         return orderId;
     }
 
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
     public LocalDateTime getOrderDate() {
         return orderDate;
+    }
+
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
     }
 
     public OrderStatus getStatus() {
         return status;
     }
 
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public Customer getCustomer() {
         return customer;
     }
 
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
     public List<OrderItem> getOrderItems() {
         return orderItems;
     }
 
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
+    }
+
     public List<Payment> getPayments() {
         return payments;
+    }
+
+    public void setPayments(List<Payment> payments) {
+        this.payments = payments;
     }
 
     @Override

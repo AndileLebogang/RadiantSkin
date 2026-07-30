@@ -48,16 +48,32 @@ public class Cart {
         return cartId;
     }
 
+    public void setCartId(Long cartId) {
+        this.cartId = cartId;
+    }
+
     public LocalDate getCreatedDate() {
         return createdDate;
+    }
+
+    public void setCreatedDate(LocalDate createdDate) {
+        this.createdDate = createdDate;
     }
 
     public Customer getCustomer() {
         return customer;
     }
 
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
     public List<CartItem> getCartItems() {
         return cartItems;
+    }
+
+    public void setCartItems(List<CartItem> cartItems) {
+        this.cartItems = cartItems;
     }
 
     @Override
