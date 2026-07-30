@@ -38,6 +38,10 @@ public class BodyCareProduct extends Product {
         return skinConcern;
     }
 
+    public void setSkinConcern(String skinConcern) {
+        this.skinConcern = skinConcern;
+    }
+
     @Override
     public String toString() {
         return "BodyCareProduct{" +

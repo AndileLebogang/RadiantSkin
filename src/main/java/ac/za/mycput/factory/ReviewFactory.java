@@ -1,5 +1,6 @@
 package ac.za.mycput.factory;
 
+import ac.za.mycput.domain.Customer;
 import ac.za.mycput.domain.Product;
 import ac.za.mycput.util.Helper;
 import java.time.LocalDate;
@@ -12,7 +13,7 @@ public class ReviewFactory {
 
     public static Review createReview(Long reviewId, int rating, String comment, LocalDate reviewDate, Customer customer, Product product){
         if (!Helper.isValidId(reviewId)||
-           rating<=0||
+          rating<=0||
           Helper.isNullEmpty(comment)||
           reviewDate ==null||
           customer ==null||

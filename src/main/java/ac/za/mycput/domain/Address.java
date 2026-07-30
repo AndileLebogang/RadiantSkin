@@ -40,28 +40,56 @@ public class Address {
         return addressId;
     }
 
+    public void setAddressId(Long addressId) {
+        this.addressId = addressId;
+    }
+
     public String getStreet() {
         return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
     }
 
     public String getCity() {
         return city;
     }
 
+    public void setCity(String city) {
+        this.city = city;
+    }
+
     public String getProvince() {
         return province;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
     }
 
     public String getPostalCode() {
         return postalCode;
     }
 
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
     public String getCountry() {
         return country;
     }
 
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
     public Customer getCustomer() {
         return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 
     public static class Builder {
@@ -107,7 +135,8 @@ public class Address {
         this.addressId = address.addressId;
         this.street = address.street;
         this.city = address.city;
-        this.province = address.postalCode;
+        this.province = address.province;
+        this.postalCode = address.postalCode;
         this.country = address.country;
         this.customer = address.customer;
         return this;
