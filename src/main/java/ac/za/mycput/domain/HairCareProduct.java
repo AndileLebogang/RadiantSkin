@@ -38,6 +38,10 @@ public class HairCareProduct extends Product{
         return hairConcern;
     }
 
+    public void setHairConcern(String hairConcern) {
+        this.hairConcern = hairConcern;
+    }
+
     @Override
     public String toString() {
         return "HairCareProduct{" +

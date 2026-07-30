@@ -11,11 +11,9 @@ package ac.za.mycput.factory;
 
 import ac.za.mycput.domain.SkinCareProduct;
 import ac.za.mycput.util.Helper;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-@Service
 public class SkinCareFactory {
 
     public static SkinCareProduct createSkinCareProduct(String name, String description, String brand, BigDecimal price, int stockQuantity, String imageUrl, int volumeMl, String usageInstructions) {

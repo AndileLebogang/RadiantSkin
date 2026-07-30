@@ -1,15 +1,13 @@
 package ac.za.mycput.controller;
 
-/*
-* Name: Siphokazi Malingatshoni
-* Student Number: 222868708
- */
-
 import ac.za.mycput.domain.Customer;
-import ac.za.mycput.domain.Review;
+import ac.za.mycput.domain.Order;
+import ac.za.mycput.domain.OrderItem;
+import ac.za.mycput.domain.OrderStatus;
 import ac.za.mycput.domain.SkinCareProduct;
 import ac.za.mycput.factory.CustomerFactory;
-import ac.za.mycput.factory.ReviewFactory;
+import ac.za.mycput.factory.OrderFactory;
+import ac.za.mycput.factory.OrderItemFactory;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,32 +15,34 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.MethodName.class)
-class ReviewControllerTest {
+class OrderItemControllerTest {
 
     private static Customer customer;
+    private static Order order;
     private static SkinCareProduct product;
-    private static Review review;
+    private static OrderItem orderItem;
 
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/review";
+    private static final String BASE_URL = "http://localhost:8080/orderitem";
     private static final String CUSTOMER_URL = "http://localhost:8080/customer";
+    private static final String ORDER_URL = "http://localhost:8080/order";
     private static final String SKINCARE_URL = "http://localhost:8080/skincare";
 
     @BeforeAll
     static void setup() {
         customer = CustomerFactory.createCustomer(
                 1L,
-                "Siphokazi",
-                "Malingatshoni",
-                "siphokazi.review.test@example.com",
+                "Lindiwe",
+                "Dlamini",
+                "lindiwe.orderitem.test@example.com",
                 "Password123",
                 "0821234567"
         );
@@ -72,35 +72,49 @@ class ReviewControllerTest {
         assertNotNull(productResponse.getBody());
         product = productResponse.getBody();
 
-        review = ReviewFactory.createReview(
+        Order newOrder = OrderFactory.createOrder(
                 1L,
-                5,
-                "Loved this serum, noticeable glow within a week!",
-                LocalDate.now(),
+                LocalDateTime.now(),
+                OrderStatus.PENDING,
+                new BigDecimal("499.98"),
                 customer,
+                null,
+                null
+        );
+
+        ResponseEntity<Order> orderResponse =
+                this.restTemplate.postForEntity(ORDER_URL + "/create", newOrder, Order.class);
+        assertNotNull(orderResponse.getBody());
+        order = orderResponse.getBody();
+
+        orderItem = OrderItemFactory.createOrderItem(
+                1L,
+                2,
+                new BigDecimal("249.99"),
+                order,
                 product
         );
 
         String url = BASE_URL + "/create";
 
-        ResponseEntity<Review> postResponse =
-                this.restTemplate.postForEntity(url, review, Review.class);
+        ResponseEntity<OrderItem> postResponse =
+                this.restTemplate.postForEntity(url, orderItem, OrderItem.class);
 
         assertNotNull(postResponse);
         assertNotNull(postResponse.getBody());
 
-        review = postResponse.getBody();
+        orderItem = postResponse.getBody();
 
-        System.out.println("Created: " + review);
+        System.out.println("Created: " + orderItem);
     }
 
     @Test
     void b_read() {
 
-        String url = BASE_URL + "/read/" + review.getReviewId();
+        String url = BASE_URL + "/read/" + orderItem.getOrderItemId();
 
-        ResponseEntity<Review> response =
-                this.restTemplate.getForEntity(url, Review.class);
+        ResponseEntity<OrderItem> response =
+                this.restTemplate.getForEntity(url, OrderItem.class);
 
         assertNotNull(response.getBody());
 
@@ -110,15 +124,14 @@ class ReviewControllerTest {
     @Test
     void c_update() {
 
-        review.setRating(4);
-        review.setComment("Still great, updated after a month of use.");
+        orderItem.setQuantity(3);
 
         String url = BASE_URL + "/update";
 
-        this.restTemplate.put(url, review);
+        this.restTemplate.put(url, orderItem);
 
-        ResponseEntity<Review> response =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + review.getReviewId(), Review.class);
+        ResponseEntity<OrderItem> response =
+                this.restTemplate.getForEntity(BASE_URL + "/read/" + orderItem.getOrderItemId(), OrderItem.class);
 
         assertNotNull(response.getBody());
 
@@ -130,25 +143,25 @@ class ReviewControllerTest {
 
         String url = BASE_URL + "/getAll";
 
-        ResponseEntity<Review[]> response =
-                this.restTemplate.getForEntity(url, Review[].class);
+        ResponseEntity<OrderItem[]> response =
+                this.restTemplate.getForEntity(url, OrderItem[].class);
 
         assertNotNull(response.getBody());
 
         System.out.println("Get All:");
 
-        for (Review r : response.getBody()) {
-            System.out.println(r);
+        for (OrderItem oi : response.getBody()) {
+            System.out.println(oi);
         }
     }
 
     @Test
     void e_delete() {
 
-        String url = BASE_URL + "/delete/" + review.getReviewId();
+        String url = BASE_URL + "/delete/" + orderItem.getOrderItemId();
 
         this.restTemplate.delete(url);
 
-        System.out.println("Deleted review with id: " + review.getReviewId());
+        System.out.println("Deleted order item with id: " + orderItem.getOrderItemId());
     }
 }

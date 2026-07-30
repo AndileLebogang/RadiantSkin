@@ -10,36 +10,43 @@ import ac.za.mycput.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java .util.List;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/address")
 public class AddressController {
 
+    private final AddressService service;
+
     @Autowired
-    private AddressService service;
+    public AddressController(AddressService service) {
+        this.service = service;
+    }
 
     @PostMapping("/create")
-    public Address create(@RequestBody Address address){
+    public Address create(@RequestBody Address address) {
         return service.create(address);
     }
+
     @GetMapping("/read/{id}")
-    public Address read(@PathVariable Long id){
+    public Optional<Address> read(@PathVariable Long id) {
         return service.read(id);
     }
-    @GetMapping("/all")
-    public List<Address>getAll(){
+
+    @GetMapping("/getAll")
+    public List<Address> getAll() {
         return service.getAll();
     }
+
     @PutMapping("/update")
-    public Address update(@RequestBody Address address){
+    public Address update(@RequestBody Address address) {
         return service.update(address);
     }
+
     @DeleteMapping("/delete/{id}")
-    public void delete(@PathVairiable Long id){
+    public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 
-
 }
-

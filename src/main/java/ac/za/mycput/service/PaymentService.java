@@ -52,7 +52,7 @@ public class PaymentService implements IPaymentService {
 
     @Override
     public List<Payment> findByStatus(PaymentStatus status) {
-        return this.repo.findByStatus(status);
+        return this.repo.findByPaymentStatus(status);
     }
 
     @Override

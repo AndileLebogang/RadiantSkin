@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository <Review,Long>  {
 
- List<Review>findyByCustomer(Customer customer);
+ List<Review> findByCustomer(Customer customer);
 
- List<Review>findyByProduct(Product product);
+ List<Review> findByProduct(Product product);
 }

@@ -38,6 +38,10 @@ public class SkinCareProduct extends Product {
         return usageInstructions;
     }
 
+    public void setUsageInstructions(String usageInstructions) {
+        this.usageInstructions = usageInstructions;
+    }
+
     @Override
     public String toString() {
         return "SkinCareProduct{" +
