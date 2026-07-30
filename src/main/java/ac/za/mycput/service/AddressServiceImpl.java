@@ -6,7 +6,6 @@ package ac.za.mycput.service;
  */
 import ac.za.mycput.domain.Address;
 import ac.za.mycput.repository.AddressRepository;
-import ac.za.mycput.service.AddressService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

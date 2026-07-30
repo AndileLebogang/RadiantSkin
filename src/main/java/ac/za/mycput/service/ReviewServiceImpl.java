@@ -5,7 +5,6 @@ package ac.za.mycput.service;
  */
 import ac.za.mycput.domain.Review;
 import ac.za.mycput.repository.ReviewRepository;
-import ac.za.mycput.service.ReviewService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
