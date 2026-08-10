@@ -1,26 +1,21 @@
-import { useState, useEffect } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
+import { Routes, Route } from "react-router-dom";
+import Homepage from "./pages/Homepage";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
 import "./App.css";
 
 function App() {
-  const [title, setTitle] = useState("Default Value");
-  useEffect(() => {
-    fetch("http://localhost:8080/home")
-      .then((response) => response.text())
-      .then(text => setTitle(text))
-      .catch((error) => {
-        console.error("Error fetching title:", error);
-      })
-      
-  }, []);
-
   return (
-    <>
-    <h1>React + {title}</h1>
-    </>
-  )
+    <Routes>
+      <Route path="/" element={<Homepage />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/products" element={<Products />} />
+    </Routes>
+  );
 }
 
 export default App;

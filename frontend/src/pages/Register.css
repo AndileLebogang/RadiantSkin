@@ -1,0 +1,280 @@
+/* ===========================
+   Register Page
+=========================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.register-page {
+  display: flex;
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+  background: #f5f3ff;
+}
+
+/* ===========================
+   LEFT SIDE
+=========================== */
+
+.register-left {
+  flex: 1;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  padding: 60px;
+}
+
+.overlay {
+  max-width: 500px;
+}
+
+.overlay h1 {
+  font-size: 46px;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.overlay span {
+  color: #ffffff;
+}
+
+.overlay h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.overlay p {
+  font-size: 17px;
+  line-height: 1.8;
+  margin-bottom: 35px;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.feature span {
+  width: 35px;
+  height: 35px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+/* ===========================
+   RIGHT SIDE
+=========================== */
+
+.register-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 560px;
+  background: white;
+  border-radius: 24px;
+  padding: 45px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+.register-card h2 {
+  color: #1f2937;
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-bottom: 35px;
+  line-height: 1.6;
+}
+
+/* ===========================
+   FORM
+=========================== */
+
+.row {
+  display: flex;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 22px;
+  flex: 1;
+}
+
+.input-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input-group input {
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  width: 100%;
+  padding-right: 85px;
+}
+
+.show-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  color: #8b5cf6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===========================
+   CHECKBOX
+=========================== */
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.checkbox input {
+  margin-top: 4px;
+}
+
+.checkbox label {
+  color: #555;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* ===========================
+   BUTTON
+=========================== */
+
+.register-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  background: #8b5cf6;
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.register-btn:hover {
+  background: #6d28d9;
+  transform: translateY(-2px);
+}
+
+/* ===========================
+   LINKS
+=========================== */
+
+.bottom-links {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.bottom-links p {
+  color: #6b7280;
+}
+
+.bottom-links a {
+  color: #8b5cf6;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bottom-links a:hover {
+  text-decoration: underline;
+}
+
+.back-home {
+  display: inline-block;
+  margin-top: 18px;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+
+@media (max-width: 992px) {
+  .register-page {
+    flex-direction: column;
+  }
+
+  .register-left {
+    display: none;
+  }
+
+  .register-right {
+    padding: 30px 20px;
+  }
+
+  .register-card {
+    padding: 35px 25px;
+  }
+
+  .row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .register-card h2 {
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .register-btn {
+    font-size: 16px;
+  }
+}
