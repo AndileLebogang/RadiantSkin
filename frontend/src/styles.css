@@ -452,3 +452,8 @@ textarea {
 textarea:focus { outline: none; border-color: var(--color-primary); }
 
 @media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+/* ===== Shop landing page ===== */
+.shop-landing-hero { background: var(--color-lavender); padding: 60px 0 40px; text-align: center; }
+.shop-landing-hero h1 { font-size: 34px; margin-bottom: 10px; }
+.shop-landing-hero p { color: #6B7280; }
