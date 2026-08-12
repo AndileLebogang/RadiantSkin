@@ -11,7 +11,7 @@ import ac.za.mycput.factory.OrderItemFactory;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
@@ -39,7 +39,6 @@ class OrderItemControllerTest {
     @BeforeAll
     static void setup() {
         customer = CustomerFactory.createCustomer(
-                1L,
                 "Lindiwe",
                 "Dlamini",
                 "lindiwe.orderitem.test@example.com",

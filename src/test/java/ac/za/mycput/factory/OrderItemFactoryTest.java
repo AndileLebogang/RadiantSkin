@@ -17,7 +17,6 @@ class OrderItemFactoryTest {
 
     private Order createTestOrder() {
         Customer customer = CustomerFactory.createCustomer(
-                1L,
                 "John",
                 "Doe",
                 "john@gmail.com",

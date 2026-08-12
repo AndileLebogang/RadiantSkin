@@ -11,7 +11,6 @@ class AdminFactoryTest {
     void createAdmin() {
 
         Admin admin = AdminFactory.createAdmin(
-                1L,
                 "Naledi",
                 "Molefe",
                 "naledi.molefe@gmail.com",
@@ -31,7 +30,6 @@ class AdminFactoryTest {
     void createAdminWithInvalidEmail() {
 
         Admin admin = AdminFactory.createAdmin(
-                2L,
                 "Thabo",
                 "Ndlovu",
                 "thabondlovugmail.com",
@@ -46,8 +44,7 @@ class AdminFactoryTest {
     void createAdminWithEmptyFirstName() {
 
         Admin admin = AdminFactory.createAdmin(
-                3L,
-                "",
+                "Katlego",
                 "Khumalo",
                 "ayanda.khumalo@gmail.com",
                 "Pass123",
@@ -61,9 +58,8 @@ class AdminFactoryTest {
     void createAdminWithEmptyLastName() {
 
         Admin admin = AdminFactory.createAdmin(
-                4L,
                 "Boitumelo",
-                "",
+                "Tau",
                 "boitumelo.modise@gmail.com",
                 "Pass123",
                 "EMP004"
@@ -76,7 +72,6 @@ class AdminFactoryTest {
     void createAdminWithEmptyPassword() {
 
         Admin admin = AdminFactory.createAdmin(
-                5L,
                 "Karabo",
                 "Dlamini",
                 "karabo.dlamini@gmail.com",
@@ -91,7 +86,6 @@ class AdminFactoryTest {
     void createAdminWithEmptyEmployeeNumber() {
 
         Admin admin = AdminFactory.createAdmin(
-                6L,
                 "Aphiwe",
                 "Jacobs",
                 "aphiwe.jacobs@gmail.com",

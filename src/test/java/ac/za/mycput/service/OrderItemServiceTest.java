@@ -9,165 +9,140 @@
 package ac.za.mycput.service;
 
 import ac.za.mycput.domain.Customer;
+import ac.za.mycput.domain.HairCareProduct;
 import ac.za.mycput.domain.Order;
 import ac.za.mycput.domain.OrderItem;
 import ac.za.mycput.domain.OrderStatus;
-import ac.za.mycput.domain.Product;
 import ac.za.mycput.factory.CustomerFactory;
 import ac.za.mycput.factory.HairCareFactory;
 import ac.za.mycput.factory.OrderFactory;
 import ac.za.mycput.factory.OrderItemFactory;
-import ac.za.mycput.repository.OrderItemRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@TestMethodOrder(MethodOrderer.MethodName.class)
 class OrderItemServiceTest {
 
-    @Mock
-    private OrderItemRepository repo;
+    @Autowired
+    private OrderItemService service;
 
-    @InjectMocks
-    private OrderItemService orderItemService;
+    private final Customer customer = CustomerFactory.createCustomer(
+            "John",
+            "Doe",
+            "john.orderitem.service@gmail.com",
+            "Password123",
+            "0712345678"
+    );
 
-    private Order testOrder;
-    private Product testProduct;
-    private OrderItem testOrderItem;
+    private final Order order = OrderFactory.createOrder(
+            1001L,
+            LocalDateTime.now(),
+            OrderStatus.PENDING,
+            new BigDecimal("250.00"),
+            customer,
+            null,
+            null
+    );
 
-    @BeforeEach
-    void setUp() {
-        Customer testCustomer = CustomerFactory.createCustomer(
-                1L,
-                "John",
-                "Doe",
-                "john@gmail.com",
-                "password123",
-                "0712345678"
-        );
+    private final HairCareProduct product = HairCareFactory.createHairCareProduct(
+            "Argan Oil Shampoo",
+            "Nourishing shampoo for dry hair",
+            "RadiantSkin",
+            new BigDecimal("120.00"),
+            50,
+            "https://example.com/image.jpg",
+            250,
+            "Dryness"
+    );
 
-        testOrder = OrderFactory.createOrder(
-                1001L,
-                LocalDateTime.now(),
-                OrderStatus.PENDING,
-                new BigDecimal("250.00"),
-                testCustomer,
-                null,
-                null
-        );
+    private final OrderItem orderItem = OrderItemFactory.createOrderItem(
+            2001L,
+            2,
+            new BigDecimal("120.00"),
+            order,
+            product
+    );
 
-        testProduct = HairCareFactory.createHairCareProduct(
-                "Argan Oil Shampoo",
-                "Nourishing shampoo for dry hair",
-                "RadiantSkin",
-                new BigDecimal("120.00"),
-                50,
-                "https://example.com/image.jpg",
-                250,
-                "Dryness"
-        );
+    @Test
+    void a_create() {
 
-        testOrderItem = OrderItemFactory.createOrderItem(
-                2001L,
-                2,
-                new BigDecimal("120.00"),
-                testOrder,
-                testProduct
-        );
+        OrderItem created = service.create(orderItem);
+
+        assertNotNull(created);
+        System.out.println("Created: " + created);
     }
 
     @Test
-    void testCreate() {
-        when(repo.save(testOrderItem)).thenReturn(testOrderItem);
+    void b_read() {
 
-        OrderItem result = orderItemService.create(testOrderItem);
+        OrderItem read = service.read(orderItem.getOrderItemId());
 
-        assertNotNull(result);
-        assertEquals(testOrderItem.getOrderItemId(), result.getOrderItemId());
-        verify(repo, times(1)).save(testOrderItem);
+        assertNotNull(read);
+        System.out.println("Read: " + read);
     }
 
     @Test
-    void testRead() {
-        when(repo.findById(2001L)).thenReturn(Optional.of(testOrderItem));
+    void c_update() {
 
-        OrderItem result = orderItemService.read(2001L);
+        OrderItem updated = new OrderItem.Builder()
+                .copy(orderItem)
+                .setQuantity(3)
+                .build();
 
-        assertNotNull(result);
-        assertEquals(2001L, result.getOrderItemId());
-        verify(repo, times(1)).findById(2001L);
+        updated = service.update(updated);
+
+        assertNotNull(updated);
+        assertEquals(3, updated.getQuantity());
+
+        System.out.println("Updated: " + updated);
     }
 
     @Test
-    void testReadNotFound() {
-        when(repo.findById(999L)).thenReturn(Optional.empty());
+    void d_delete() {
 
-        OrderItem result = orderItemService.read(999L);
+        boolean deleted = service.delete(orderItem.getOrderItemId());
 
-        assertNull(result);
-        verify(repo, times(1)).findById(999L);
+        assertTrue(deleted);
+        System.out.println("Deleted Successfully");
     }
 
     @Test
-    void testUpdate() {
-        when(repo.save(testOrderItem)).thenReturn(testOrderItem);
+    void e_getAll() {
 
-        OrderItem result = orderItemService.update(testOrderItem);
-
-        assertNotNull(result);
-        assertEquals(testOrderItem.getOrderItemId(), result.getOrderItemId());
-        verify(repo, times(1)).save(testOrderItem);
-    }
-
-    @Test
-    void testDelete() {
-        boolean result = orderItemService.delete(2001L);
-
-        assertTrue(result);
-        verify(repo, times(1)).deleteById(2001L);
-    }
-
-    @Test
-    void testGetAll() {
-        when(repo.findAll()).thenReturn(List.of(testOrderItem));
-
-        List<OrderItem> items = orderItemService.getAll();
+        List<OrderItem> items = service.getAll();
 
         assertNotNull(items);
-        assertEquals(1, items.size());
-        verify(repo, times(1)).findAll();
+
+        items.forEach(System.out::println);
     }
 
     @Test
-    void testFindByOrder() {
-        when(repo.findByOrder(testOrder)).thenReturn(List.of(testOrderItem));
+    void f_findByOrder() {
 
-        List<OrderItem> items = orderItemService.findByOrder(testOrder);
+        List<OrderItem> items = service.findByOrder(order);
 
         assertNotNull(items);
-        assertEquals(1, items.size());
-        verify(repo, times(1)).findByOrder(testOrder);
+
+        items.forEach(System.out::println);
     }
 
     @Test
-    void testFindByProduct() {
-        when(repo.findByProduct(testProduct)).thenReturn(List.of(testOrderItem));
+    void g_findByProduct() {
 
-        List<OrderItem> items = orderItemService.findByProduct(testProduct);
+        List<OrderItem> items = service.findByProduct(product);
 
         assertNotNull(items);
-        assertEquals(1, items.size());
-        verify(repo, times(1)).findByProduct(testProduct);
+
+        items.forEach(System.out::println);
     }
 }

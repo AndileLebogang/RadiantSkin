@@ -10,21 +10,25 @@ import ac.za.mycput.util.Helper;
  */
 public class AddressFactory {
 
-    public static Address createAddress(Long addressId, String street, String city,
-                                        String province, String postalCode,
-                                        String country, Customer customer){
+    public static Address createAddress(
+            String street,
+            String city,
+            String province,
+            String postalCode,
+            String country,
+            Customer customer) {
 
-        if (!Helper.isValidId(addressId)||
-           Helper.isNullEmpty(street)||
-           Helper.isNullEmpty(city)||
-           Helper.isNullEmpty(province)||
-           Helper.isNullEmpty(postalCode)||
-           Helper.isNullEmpty(country)||
-           customer ==null ) {
+        if (Helper.isNullEmpty(street) ||
+                Helper.isNullEmpty(city) ||
+                Helper.isNullEmpty(province) ||
+                Helper.isNullEmpty(postalCode) ||
+                Helper.isNullEmpty(country) ||
+                customer == null) {
+
             return null;
         }
-            return new Address.Builder()
-                .setAddressId(addressId)
+
+        return new Address.Builder()
                 .setStreet(street)
                 .setCity(city)
                 .setProvince(province)
@@ -32,10 +36,5 @@ public class AddressFactory {
                 .setCountry(country)
                 .setCustomer(customer)
                 .build();
-
-
     }
-
 }
-
-

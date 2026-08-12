@@ -19,32 +19,27 @@ public class AdminService implements IAdminService {
 
     @Override
     public Admin create(Admin admin) {
-        return this.repo.save(admin);
+        return repo.save(admin);
     }
 
     @Override
     public Admin read(Long id) {
-        return this.repo.findById(id).orElse(null);
+        return repo.findById(id).orElse(null);
     }
 
     @Override
     public Admin update(Admin admin) {
-        return this.repo.save(admin);
+        return repo.save(admin);
     }
 
     @Override
     public boolean delete(Long id) {
-        this.repo.deleteById(id);
+        repo.deleteById(id);
         return true;
     }
 
     @Override
     public List<Admin> getAll() {
-        return this.repo.findAll();
-    }
-
-    @Override
-    public Admin findByEmail(String email) {
-        return this.repo.findByEmail(email);
+        return repo.findAll();
     }
 }

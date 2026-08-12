@@ -1,108 +1,118 @@
 package ac.za.mycput.service;
 
 import ac.za.mycput.domain.Admin;
-import ac.za.mycput.repository.AdminRepository;
-import org.junit.jupiter.api.BeforeEach;
+import ac.za.mycput.factory.AdminFactory;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@TestMethodOrder(MethodOrderer.MethodName.class)
 class AdminServiceTest {
 
-    @Mock
-    private AdminRepository repo;
-
-    @InjectMocks
+    @Autowired
     private AdminService service;
 
-    private Admin admin;
-
-    @BeforeEach
-    void setUp() {
-        admin = new Admin.Builder()
-                .setUserId(1L)
-                .setEmployeeNumber("EMP001")
-                .setFirstName("John")
-                .setLastName("Doe")
-                .setEmail("john@example.com")
-                .setPassword("12345")
-                .build();
-    }
-
     @Test
-    void create() {
-        when(repo.save(admin)).thenReturn(admin);
+    void a_create() {
+
+        Admin admin = AdminFactory.createAdmin(
+                "Naledi",
+                "Molefe",
+                "naledi@gmail.com",
+                "Password123",
+                "EMP001"
+        );
 
         Admin created = service.create(admin);
 
         assertNotNull(created);
-        assertEquals(admin.getUserId(), created.getUserId());
-        verify(repo, times(1)).save(admin);
+        assertNotNull(created.getUserId());
+
+        System.out.println("Created: " + created);
     }
 
     @Test
-    void read() {
-        when(repo.findById(1L)).thenReturn(Optional.of(admin));
+    void b_read() {
 
-        Admin found = service.read(1L);
+        Admin admin = AdminFactory.createAdmin(
+                "Naledi",
+                "Molefe",
+                "naledi2@gmail.com",
+                "Password123",
+                "EMP002"
+        );
 
-        assertNotNull(found);
-        assertEquals(admin.getUserId(), found.getUserId());
-        verify(repo, times(1)).findById(1L);
+        admin = service.create(admin);
+
+        Admin read = service.read(admin.getUserId());
+
+        assertNotNull(read);
+        assertEquals(admin.getUserId(), read.getUserId());
+
+        System.out.println("Read: " + read);
     }
 
     @Test
-    void update() {
-        when(repo.save(admin)).thenReturn(admin);
+    void c_update() {
 
-        Admin updated = service.update(admin);
+        Admin admin = AdminFactory.createAdmin(
+                "Naledi",
+                "Molefe",
+                "naledi3@gmail.com",
+                "Password123",
+                "EMP003"
+        );
+
+        admin = service.create(admin);
+
+        Admin updated = new Admin.Builder()
+                .copy(admin)
+                .setEmployeeNumber("EMP999")
+                .build();
+
+        updated = service.update(updated);
 
         assertNotNull(updated);
-        assertEquals(admin.getEmail(), updated.getEmail());
-        verify(repo, times(1)).save(admin);
+        assertEquals("EMP999", updated.getEmployeeNumber());
+
+        System.out.println("Updated: " + updated);
     }
 
     @Test
-    void delete() {
-        doNothing().when(repo).deleteById(1L);
+    void d_delete() {
 
-        boolean deleted = service.delete(1L);
+        Admin admin = AdminFactory.createAdmin(
+                "Naledi",
+                "Molefe",
+                "naledi4@gmail.com",
+                "Password123",
+                "EMP004"
+        );
+
+        admin = service.create(admin);
+
+        boolean deleted = service.delete(admin.getUserId());
 
         assertTrue(deleted);
-        verify(repo, times(1)).deleteById(1L);
+
+        System.out.println("Deleted Successfully");
     }
 
     @Test
-    void getAll() {
-        List<Admin> admins = Arrays.asList(admin);
+    void e_getAll() {
 
-        when(repo.findAll()).thenReturn(admins);
+        List<Admin> admins = service.getAll();
 
-        List<Admin> result = service.getAll();
+        assertNotNull(admins);
+        assertFalse(admins.isEmpty());
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(repo, times(1)).findAll();
-    }
-
-    @Test
-    void findByEmail() {
-        when(repo.findByEmail("john@example.com")).thenReturn(admin);
-
-        Admin found = service.findByEmail("john@example.com");
-
-        assertNotNull(found);
-        assertEquals("john@example.com", found.getEmail());
-        verify(repo, times(1)).findByEmail("john@example.com");
+        admins.forEach(System.out::println);
     }
 }

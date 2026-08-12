@@ -10,8 +10,4 @@ public interface ICustomerService extends IService<Customer, Long> {
 
     List<Customer> findByPhoneNumber(String phoneNumber);
 
-    Customer register(Customer customer);
-
-    Customer login(String email, String password);
-
 }

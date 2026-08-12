@@ -11,12 +11,17 @@ import ac.za.mycput.util.Helper;
 
 public class CartFactory {
 
-    public static Cart createCart(Long cartId, LocalDate createdDate, Customer customer, List<CartItem> cartItems) {
+    public static Cart createCart(Long cartId,
+                                  LocalDate createdDate,
+                                  Customer customer,
+                                  List<CartItem> cartItems) {
 
-        if (createdDate == null || customer == null || !Helper.isValidCartItems(cartItems)) {
+        if (!Helper.isValidId(cartId) ||
+                createdDate == null ||
+                customer == null ||
+                !Helper.isValidCartItems(cartItems)) {
             return null;
         }
-
 
         return new Cart.Builder()
                 .setCartId(cartId)

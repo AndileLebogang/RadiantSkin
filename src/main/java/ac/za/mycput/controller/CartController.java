@@ -1,7 +1,7 @@
 package ac.za.mycput.controller;
 
 import ac.za.mycput.domain.Cart;
-import ac.za.mycput.service.CartService;
+import ac.za.mycput.service.ICartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -10,10 +10,10 @@ import java.util.List;
 @RequestMapping("/cart")
 public class CartController {
 
-    private final CartService service;
+    private final ICartService service;
 
     @Autowired
-    public CartController(CartService service) {
+    public CartController(ICartService service) {
         this.service = service;
     }
 

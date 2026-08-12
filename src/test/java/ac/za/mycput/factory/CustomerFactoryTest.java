@@ -11,7 +11,6 @@ class CustomerFactoryTest {
     void testCreateValidCustomer() {
 
         Customer customer = CustomerFactory.createCustomer(
-                1L,
                 "John",
                 "Doe",
                 "john@gmail.com",
@@ -29,7 +28,6 @@ class CustomerFactoryTest {
     void testCreateInvalidEmailCustomer() {
 
         Customer customer = CustomerFactory.createCustomer(
-                1L,
                 "John",
                 "Doe",
                 "invalidemail",
@@ -44,7 +42,6 @@ class CustomerFactoryTest {
     void testCreateInvalidPhoneCustomer() {
 
         Customer customer = CustomerFactory.createCustomer(
-                1L,
                 "John",
                 "Doe",
                 "john@gmail.com",

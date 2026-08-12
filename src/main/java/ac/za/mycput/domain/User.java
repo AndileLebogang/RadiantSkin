@@ -15,8 +15,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -35,17 +33,10 @@ public abstract class User {
     protected String email;
 
     protected String password;
-    @Enumerated(EnumType.STRING)
-    protected Role role;
 
     public User(){}
 
-    public User(Long userId,
-                String firstName,
-                String lastName,
-                String email,
-                String password,
-                Role role){
+    public User(Long userId, String firstName, String lastName, String email, String password) {
 
         this.userId = userId;
 
@@ -56,7 +47,6 @@ public abstract class User {
         this.email = email;
 
         this.password = password;
-        this.role = role;
 
     }
 
@@ -113,17 +103,11 @@ public abstract class User {
         return password;
 
     }
-    public Role getRole() {
-        return role;
-    }
 
     public void setPassword(String password) {
 
         this.password = password;
 
-    }
-    public void setRole(Role role){
-        this.role = role;
     }
 
 
@@ -133,8 +117,7 @@ public abstract class User {
 
         return "User [userId=" + userId + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
 
-                + ", password=" + password
-                + ", role=" + role + "]";
+                + ", password=" + password + "]";
 
     }
 

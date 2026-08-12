@@ -51,12 +51,12 @@ public class BodyCareProductController {
         return service.findByBrand(brand);
     }
 
-    @GetMapping("/search")
-    public List<BodyCareProduct> search(@RequestParam String keyword) {
+    @GetMapping("/search/{keyword}")
+    public List<BodyCareProduct> search(@PathVariable String keyword) {
         return service.searchByName(keyword);
     }
 
-    @GetMapping("/inStock")
+    @GetMapping("/stock")
     public List<BodyCareProduct> findInStock() {
         return service.findInStock();
     }
