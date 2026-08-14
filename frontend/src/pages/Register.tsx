@@ -1,27 +1,51 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
+  const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // TODO: connect to backend registration endpoint
-    navigate('/login');
+    setError("");
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const response = await fetch("http://localhost:8080/customer/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phoneNumber: form.phone,
+        password: form.password,
+      }),
+    });
+
+    if (response.ok) {
+      navigate("/login");
+    } else {
+      const message = await response.text();
+      setError(message);
+    }
   };
 
   return (
@@ -30,7 +54,9 @@ function Register() {
       <div className="auth-page">
         <div className="auth-card">
           <h1>Create your account</h1>
-          <p className="auth-sub">Join RadiantSkin for honest, effective skincare.</p>
+          <p className="auth-sub">
+            Join RadiantSkin for honest, effective skincare.
+          </p>
 
           <form onSubmit={handleSubmit}>
             <div className="form-row">
@@ -40,7 +66,7 @@ function Register() {
                   id="firstName"
                   name="firstName"
                   type="text"
-                  placeholder="Nonhlanhla"
+                  placeholder="firstName"
                   value={form.firstName}
                   onChange={handleChange}
                   required
@@ -52,7 +78,7 @@ function Register() {
                   id="lastName"
                   name="lastName"
                   type="text"
-                  placeholder="Hazel"
+                  placeholder="lastName"
                   value={form.lastName}
                   onChange={handleChange}
                   required
@@ -112,7 +138,11 @@ function Register() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block">Create Account</button>
+            {error && <p className="auth-error">{error}</p>}
+
+            <button type="submit" className="btn btn-primary btn-block">
+              Create Account
+            </button>
           </form>
 
           <p className="auth-footer-text">

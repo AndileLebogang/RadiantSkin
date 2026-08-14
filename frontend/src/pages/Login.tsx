@@ -1,20 +1,36 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // TODO: connect to backend login endpoint
-    if (email.toLowerCase().includes('admin')) {
-      navigate('/admin-dashboard');
+    setError("");
+
+    const response = await fetch("http://localhost:8080/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.ok) {
+      const user = await response.json();
+      localStorage.setItem("customer", JSON.stringify(user));
+
+      if (user.role === "ADMIN") {
+        navigate("/admin-dashboard");
+      } else {
+        navigate("/customer-dashboard");
+      }
     } else {
-      navigate('/customer-dashboard');
+      const message = await response.text();
+      setError(message);
     }
   };
 
@@ -51,7 +67,11 @@ function Login() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block">Login</button>
+            {error && <p className="auth-error">{error}</p>}
+
+            <button type="submit" className="btn btn-primary btn-block">
+              Login
+            </button>
           </form>
 
           <p className="auth-footer-text">

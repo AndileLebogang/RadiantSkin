@@ -3,6 +3,8 @@ package ac.za.mycput.controller;
 import ac.za.mycput.domain.Admin;
 import ac.za.mycput.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +21,13 @@ public class AdminController {
     }
 
     @PostMapping("/create")
-    public Admin create(@RequestBody Admin admin) {
-        return service.create(admin);
+    public ResponseEntity<?> create(@RequestBody Admin admin) {
+        try {
+            Admin saved = service.create(admin);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @GetMapping("/read/{id}")
