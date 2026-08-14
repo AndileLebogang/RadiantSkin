@@ -5,16 +5,23 @@ import ac.za.mycput.util.Helper;
 
 public class AdminFactory {
 
-    public static Admin createAdmin(Long userId, String firstName, String lastName,
-                                    String email, String password, String employeeNumber) {
+    public static Admin createAdmin(
+                                    String firstName,
+                                    String lastName,
+                                    String email,
+                                    String password,
+                                    String employeeNumber) {
 
-        if (!UserFactory.isValidUser(firstName, lastName, email, password)
-                || !Helper.isValidString(employeeNumber)) {
+        if (Helper.isNullEmpty(firstName) ||
+                Helper.isNullEmpty(lastName) ||
+                Helper.isNullEmpty(email) ||
+                !Helper.isValidEmail(email) ||
+                Helper.isNullEmpty(password) ||
+                Helper.isNullEmpty(employeeNumber)) {
             return null;
         }
 
         return new Admin.Builder()
-                .setUserId(userId)
                 .setFirstName(firstName)
                 .setLastName(lastName)
                 .setEmail(email)

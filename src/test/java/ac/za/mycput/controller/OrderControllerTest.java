@@ -32,7 +32,6 @@ class OrderControllerTest {
     @BeforeAll
     static void setup() {
         customer = CustomerFactory.createCustomer(
-                1L,
                 "Lindiwe",
                 "Dlamini",
                 "lindiwe.order.test@example.com",

@@ -6,21 +6,22 @@ package ac.za.mycput.controller;
  */
 
 import ac.za.mycput.domain.Address;
-import ac.za.mycput.service.AddressService;
+import ac.za.mycput.service.IAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/address")
 public class AddressController {
 
-    private final AddressService service;
+    private final IAddressService service;
 
     @Autowired
-    public AddressController(AddressService service) {
+    public AddressController(IAddressService service) {
         this.service = service;
     }
 
@@ -30,13 +31,8 @@ public class AddressController {
     }
 
     @GetMapping("/read/{id}")
-    public Optional<Address> read(@PathVariable Long id) {
+    public Address read(@PathVariable Long id) {
         return service.read(id);
-    }
-
-    @GetMapping("/getAll")
-    public List<Address> getAll() {
-        return service.getAll();
     }
 
     @PutMapping("/update")
@@ -45,8 +41,12 @@ public class AddressController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public boolean delete(@PathVariable Long id) {
+        return service.delete(id);
     }
 
+    @GetMapping("/getAll")
+    public List<Address> getAll() {
+        return service.getAll();
+    }
 }

@@ -19,31 +19,41 @@ class CustomerServiceTest {
     @Autowired
     private CustomerService service;
 
-    private final Customer customer = CustomerFactory.createCustomer(
-            3455L,
-            "John",
-            "Doe",
-            "john@gmail.com",
-            "Password123",
-            "0821234567"
-    );
+    private static Customer customer;
 
     @Test
     void a_create() {
-        Customer created = service.create(customer);
-        assertNotNull(created);
-        System.out.println("Created: " + created);
+
+        customer = CustomerFactory.createCustomer(
+                "John",
+                "Doe",
+                "john@gmail.com",
+                "Password123",
+                "0821234567"
+        );
+
+        customer = service.create(customer);
+
+        assertNotNull(customer);
+        assertNotNull(customer.getUserId());
+
+        System.out.println(customer);
     }
 
     @Test
     void b_read() {
+
         Customer read = service.read(customer.getUserId());
+
         assertNotNull(read);
-        System.out.println("Read: " + read);
+        assertEquals(customer.getUserId(), read.getUserId());
+
+        System.out.println(read);
     }
 
     @Test
     void c_update() {
+
         Customer updated = new Customer.Builder()
                 .copy(customer)
                 .setPhoneNumber("0831234567")
@@ -51,21 +61,34 @@ class CustomerServiceTest {
 
         updated = service.update(updated);
 
-        assertNotNull(updated);
-        System.out.println("Updated: " + updated);
+        customer = updated;
+
+        assertEquals("0831234567", updated.getPhoneNumber());
+
+        System.out.println(updated);
     }
 
     @Test
     void d_delete() {
-        boolean deleted = service.delete(customer.getUserId());
-        assertTrue(deleted);
-        System.out.println("Deleted Successfully");
+
+        boolean success = service.delete(customer.getUserId());
+
+        assertTrue(success);
+
+        Customer deleted = service.read(customer.getUserId());
+
+        assertNull(deleted);
+
+        System.out.println("Deleted");
     }
 
     @Test
     void e_getAll() {
+
         List<Customer> customers = service.getAll();
+
         assertNotNull(customers);
+
         customers.forEach(System.out::println);
     }
 }

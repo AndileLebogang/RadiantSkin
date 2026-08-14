@@ -6,7 +6,7 @@ package ac.za.mycput.controller;
  */
 
 import ac.za.mycput.domain.Review;
-import ac.za.mycput.service.ReviewService;
+import ac.za.mycput.service.IReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +17,10 @@ import java.util.Optional;
 @RequestMapping("/review")
 public class ReviewController {
 
-    private final ReviewService service;
+    private final IReviewService service;
 
     @Autowired
-    public ReviewController(ReviewService service) {
+    public ReviewController(IReviewService service) {
         this.service = service;
     }
 
@@ -30,13 +30,8 @@ public class ReviewController {
     }
 
     @GetMapping("/read/{id}")
-    public Optional<Review> read(@PathVariable Long id) {
+    public Review read(@PathVariable Long id) {
         return service.read(id);
-    }
-
-    @GetMapping("/getAll")
-    public List<Review> getAll() {
-        return service.getAll();
     }
 
     @PutMapping("/update")
@@ -45,7 +40,14 @@ public class ReviewController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public boolean delete(@PathVariable Long id) {
+        return service.delete(id);
+    }
+
+    @GetMapping("/getAll")
+    public List<Review> getAll() {
+        return service.getAll();
     }
 }
+
+

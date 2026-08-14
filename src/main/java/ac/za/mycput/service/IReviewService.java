@@ -1,25 +1,16 @@
 package ac.za.mycput.service;
-
 /*
-//Name & Surname: Siphokazi Malingatshoni
-//student number: 222868708
+/Name: Siphokazi Malingatshoni
+/Student Number: 222868708
  */
 
 import ac.za.mycput.domain.Review;
 import java.util.List;
+import java.util.Optional;
 
-public interface IReviewService {
 
-    Review create (Review review);
+import ac.za.mycput.domain.Review;
 
-    Review read(Long id);
-
-    Review update( Review review );
-
-    boolean delete(Long id);
-
-    List<Review>getAll();
+public interface IReviewService extends IService<Review, Long> {
 
 }
-
-

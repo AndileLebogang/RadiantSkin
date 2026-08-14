@@ -21,7 +21,7 @@ class PaymentFactoryTest {
         );
 
         assertNotNull(payment);
-        assertEquals(1001L, payment.getPaymentID());
+        assertEquals(1001L, payment.getPaymentId());
         assertEquals(500.0, payment.getAmount());
         assertEquals("TXN12345", payment.getTransactionReference());
     }

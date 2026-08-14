@@ -2,14 +2,16 @@ package ac.za.mycput.controller;
 
 import ac.za.mycput.domain.Admin;
 import ac.za.mycput.factory.AdminFactory;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.*;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,99 +19,124 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class AdminControllerTest {
 
-    private static Admin admin;
-
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/admin";
+    private static final String BASE_URL = "/admin";
 
-    @BeforeAll
-    static void setup() {
 
-        admin = AdminFactory.createAdmin(
-                1L,
-                "Hazel",
-                "Smith",
-                "hazel@gmail.com",
-                "Password123",
-                "EMP001"
-        );
-    }
+    private static Admin admin;
 
     @Test
     void a_create() {
 
-        String url = BASE_URL + "/create";
+        Admin newAdmin = AdminFactory.createAdmin(
+                "Naledi",
+                "Molefe",
+                "naledi@gmail.com",
+                "Password123",
+                "EMP001"
+        );
 
-        ResponseEntity<Admin> postResponse =
-                this.restTemplate.postForEntity(url, admin, Admin.class);
+        ResponseEntity<Admin> response = restTemplate.postForEntity(
+                BASE_URL + "/create",
+                newAdmin,
+                Admin.class
+        );
 
-        assertNotNull(postResponse);
-        assertNotNull(postResponse.getBody());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
 
-        admin = postResponse.getBody();
+        admin = response.getBody();
 
-        System.out.println(admin);
+        assertNotNull(admin);
+        assertNotNull(admin.getUserId());
+
+        System.out.println("Created: " + admin);
     }
 
     @Test
     void b_read() {
 
-        String url = BASE_URL + "/read/" + admin.getUserId();
+        assertNotNull(admin);
+        assertNotNull(admin.getUserId());
 
-        ResponseEntity<Admin> response =
-                this.restTemplate.getForEntity(url, Admin.class);
+        ResponseEntity<Admin> response = restTemplate.getForEntity(
+                BASE_URL + "/read/" + admin.getUserId(),
+                Admin.class
+        );
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
 
-        System.out.println(response.getBody());
+        System.out.println("Read: " + response.getBody());
     }
 
     @Test
     void c_update() {
 
+        assertNotNull(admin);
+
         Admin updated = new Admin.Builder()
                 .copy(admin)
-                .setFirstName("Updated")
+                .setEmployeeNumber("EMP999")
                 .build();
 
-        String url = BASE_URL + "/update";
+        HttpEntity<Admin> entity = new HttpEntity<>(updated);
 
-        this.restTemplate.postForEntity(url, updated, Admin.class);
+        ResponseEntity<Admin> response = restTemplate.exchange(
+                BASE_URL + "/update",
+                HttpMethod.PUT,
+                entity,
+                Admin.class
+        );
 
-        ResponseEntity<Admin> response =
-                this.restTemplate.getForEntity(
-                        BASE_URL + "/read/" + updated.getUserId(),
-                        Admin.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
 
-        assertNotNull(response.getBody());
+        admin = response.getBody();
 
-        System.out.println(response.getBody());
+        assertNotNull(admin);
+        assertEquals("EMP999", admin.getEmployeeNumber());
+
+        System.out.println("Updated: " + admin);
     }
 
     @Test
     void d_getAll() {
 
-        String url = BASE_URL + "/getAll";
+        ResponseEntity<List<Admin>> response = restTemplate.exchange(
+                BASE_URL + "/getAll",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<Admin>>() {}
+        );
 
-        ResponseEntity<Admin[]> response =
-                this.restTemplate.getForEntity(url, Admin[].class);
-
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
 
-        for (Admin a : response.getBody()) {
-            System.out.println(a);
-        }
+        response.getBody().forEach(System.out::println);
     }
 
     @Test
     void e_delete() {
 
-        String url = BASE_URL + "/delete/" + admin.getUserId();
+        assertNotNull(admin);
 
-        this.restTemplate.delete(url);
+        restTemplate.delete(
+                BASE_URL + "/delete/" + admin.getUserId()
+        );
 
-        System.out.println("Deleted Admin with ID: " + admin.getUserId());
+        ResponseEntity<Admin> response = restTemplate.getForEntity(
+                BASE_URL + "/read/" + admin.getUserId(),
+                Admin.class
+        );
+
+
+        assertTrue(
+                response.getStatusCode() == HttpStatus.NOT_FOUND
+                        || response.getBody() == null
+        );
+
+        System.out.println("Deleted Successfully");
     }
 }

@@ -33,7 +33,6 @@ class AddressControllerTest {
     @BeforeAll
     static void setup() {
         customer = CustomerFactory.createCustomer(
-                1L,
                 "Siphokazi",
                 "Malingatshoni",
                 "siphokazi.malingatshoni@example.com",
@@ -52,7 +51,6 @@ class AddressControllerTest {
         customer = customerResponse.getBody();
 
         address = AddressFactory.createAddress(
-                1L,
                 "12 Main Road",
                 "Cape Town",
                 "Western Cape",

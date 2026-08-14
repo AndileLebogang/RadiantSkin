@@ -1,8 +1,10 @@
 package ac.za.mycput.controller;
 
 import ac.za.mycput.domain.Admin;
-import ac.za.mycput.service.IAdminService;
+import ac.za.mycput.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,21 +13,26 @@ import java.util.List;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final IAdminService service;
+    private final AdminService service;
 
     @Autowired
-    public AdminController(IAdminService service) {
+    public AdminController(AdminService service) {
         this.service = service;
     }
 
     @PostMapping("/create")
-    public Admin create(@RequestBody Admin admin) {
-        return service.create(admin);
+    public ResponseEntity<?> create(@RequestBody Admin admin) {
+        try {
+            Admin saved = service.create(admin);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
-    @GetMapping("/read/{userId}")
-    public Admin read(@PathVariable Long userId) {
-        return service.read(userId);
+    @GetMapping("/read/{id}")
+    public Admin read(@PathVariable Long id) {
+        return service.read(id);
     }
 
     @PutMapping("/update")
@@ -33,18 +40,13 @@ public class AdminController {
         return service.update(admin);
     }
 
-    @DeleteMapping("/delete/{userId}")
-    public boolean delete(@PathVariable Long userId) {
-        return service.delete(userId);
+    @DeleteMapping("/delete/{id}")
+    public boolean delete(@PathVariable Long id) {
+        return service.delete(id);
     }
 
     @GetMapping("/getAll")
     public List<Admin> getAll() {
         return service.getAll();
-    }
-
-    @GetMapping("/findByEmail/{email}")
-    public Admin findByEmail(@PathVariable String email) {
-        return service.findByEmail(email);
     }
 }

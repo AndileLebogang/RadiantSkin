@@ -4,6 +4,7 @@ package ac.za.mycput.factory;
 import ac.za.mycput.domain.Cart;
 import ac.za.mycput.domain.CartItem;
 import ac.za.mycput.domain.Product;
+import ac.za.mycput.domain.SkinCareProduct;
 import ac.za.mycput.util.Helper;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +19,7 @@ class CartItemFactoryTest {
                 .setCartId(1L)
                 .build();
 
-        Product product = new Product.Builder()
+        Product product = new SkinCareProduct.Builder()
                 .setProductId(1L)
                 .build();
 
@@ -43,7 +44,7 @@ class CartItemFactoryTest {
                 .setCartId(1L)
                 .build();
 
-        Product product = new Product.Builder()
+        Product product = new SkinCareProduct.Builder()
                 .setProductId(1L)
                 .build();
 

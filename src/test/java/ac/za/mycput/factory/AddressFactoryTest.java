@@ -1,60 +1,86 @@
 package ac.za.mycput.factory;
 
+import ac.za.mycput.domain.Address;
+import ac.za.mycput.domain.Customer;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 /*
 *Name: Siphokazi Malingatshoni
 * Student Number: 222868708
  */
 public class AddressFactoryTest {
 
+    private Customer createTestCustomer() {
+        return CustomerFactory.createCustomer(
+                "Siphokazi",
+                "Malingatshoni",
+                "siphokazi@gmail.com",
+                "Password123",
+                "0821234567"
+        );
+    }
+
     @Test
-    void testcreateAddress(){
+    void testCreateAddress() {
 
         Address address = AddressFactory.createAddress(
-                1L,
                 "12 Main Road",
                 "Cape Town",
                 "Western Cape",
                 "8000",
                 "South Africa",
-                customer
+                createTestCustomer()
         );
+
         assertNotNull(address);
-        assertEquals("12 Main Road",address.getStreet());
-        assertEquals("12 Main Road",address.getCity());
-
+        assertEquals("12 Main Road", address.getStreet());
+        assertEquals("Cape Town", address.getCity());
     }
+
     @Test
-    void testcreateAddressWithNullStreet(){
+    void testCreateAddressWithNullStreet() {
 
-        Customer customer = new Customer("C002","Siphokazi",null);
-
-        Address address = AddressFactory.createAdddress(
-                1L,
+        Address address = AddressFactory.createAddress(
                 null,
                 "Cape Town",
                 "Western Cape",
                 "8000",
                 "South Africa",
-                customer
+                createTestCustomer()
         );
+
         assertNull(address);
     }
-     @Test
-    void testcreateAddressWithEmptyCity(){
 
-         Customer customer = new Customer("C002","Siphokazi",null);
+    @Test
+    void testCreateAddressWithEmptyCity() {
 
-         Address address = AddressFactory.createAdddress(
-                 1L,
-                 null,
-                 "Cape Town",
-                 "",
-                 "8000",
-                 "South Africa",
-                 customer
-         );
-     }
+        Address address = AddressFactory.createAddress(
+                "12 Main Road",
+                "",
+                "Western Cape",
+                "8000",
+                "South Africa",
+                createTestCustomer()
+        );
+
+        assertNull(address);
+    }
+
+    @Test
+    void testCreateAddressWithNullCustomer() {
+
+        Address address = AddressFactory.createAddress(
+                "12 Main Road",
+                "Cape Town",
+                "Western Cape",
+                "8000",
+                "South Africa",
+                null
+        );
+
+        assertNull(address);
+    }
 }

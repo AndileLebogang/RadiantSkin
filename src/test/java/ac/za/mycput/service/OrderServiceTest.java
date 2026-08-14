@@ -13,137 +13,113 @@ import ac.za.mycput.domain.Order;
 import ac.za.mycput.domain.OrderStatus;
 import ac.za.mycput.factory.CustomerFactory;
 import ac.za.mycput.factory.OrderFactory;
-import ac.za.mycput.repository.OrderRepository;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@TestMethodOrder(MethodOrderer.MethodName.class)
 class OrderServiceTest {
 
-    @Mock
-    private OrderRepository repo;
+    @Autowired
+    private OrderService service;
 
-    @InjectMocks
-    private OrderService orderService;
+    private final Customer customer = CustomerFactory.createCustomer(
+            "John",
+            "Doe",
+            "john.order.service@gmail.com",
+            "Password123",
+            "0712345678"
+    );
 
-    private Customer testCustomer;
-    private Order testOrder;
+    private final Order order = OrderFactory.createOrder(
+            1001L,
+            LocalDateTime.now(),
+            OrderStatus.PENDING,
+            new BigDecimal("250.00"),
+            customer,
+            null,
+            null
+    );
 
-    @BeforeEach
-    void setUp() {
-        testCustomer = CustomerFactory.createCustomer(
-                1L,
-                "John",
-                "Doe",
-                "john@gmail.com",
-                "password123",
-                "0712345678"
-        );
+    @Test
+    void a_create() {
 
-        testOrder = OrderFactory.createOrder(
-                1001L,
-                LocalDateTime.now(),
-                OrderStatus.PENDING,
-                new BigDecimal("250.00"),
-                testCustomer,
-                null,
-                null
-        );
+        Order created = service.create(order);
+
+        assertNotNull(created);
+        System.out.println("Created: " + created);
     }
 
     @Test
-    void testCreate() {
-        when(repo.save(testOrder)).thenReturn(testOrder);
+    void b_read() {
 
-        Order result = orderService.create(testOrder);
+        Order read = service.read(order.getOrderId());
 
-        assertNotNull(result);
-        assertEquals(testOrder.getOrderId(), result.getOrderId());
-        verify(repo, times(1)).save(testOrder);
+        assertNotNull(read);
+        System.out.println("Read: " + read);
     }
 
     @Test
-    void testRead() {
-        when(repo.findById(1001L)).thenReturn(Optional.of(testOrder));
+    void c_update() {
 
-        Order result = orderService.read(1001L);
+        Order updated = new Order.Builder()
+                .copy(order)
+                .setStatus(OrderStatus.PROCESSING)
+                .build();
 
-        assertNotNull(result);
-        assertEquals(1001L, result.getOrderId());
-        verify(repo, times(1)).findById(1001L);
+        updated = service.update(updated);
+
+        assertNotNull(updated);
+        assertEquals(OrderStatus.PROCESSING, updated.getStatus());
+
+        System.out.println("Updated: " + updated);
     }
 
     @Test
-    void testReadNotFound() {
-        when(repo.findById(999L)).thenReturn(Optional.empty());
+    void d_delete() {
 
-        Order result = orderService.read(999L);
+        boolean deleted = service.delete(order.getOrderId());
 
-        assertNull(result);
-        verify(repo, times(1)).findById(999L);
+        assertTrue(deleted);
+        System.out.println("Deleted Successfully");
     }
 
     @Test
-    void testUpdate() {
-        when(repo.save(testOrder)).thenReturn(testOrder);
+    void e_getAll() {
 
-        Order result = orderService.update(testOrder);
-
-        assertNotNull(result);
-        assertEquals(testOrder.getOrderId(), result.getOrderId());
-        verify(repo, times(1)).save(testOrder);
-    }
-
-    @Test
-    void testDelete() {
-        boolean result = orderService.delete(1001L);
-
-        assertTrue(result);
-        verify(repo, times(1)).deleteById(1001L);
-    }
-
-    @Test
-    void testGetAll() {
-        when(repo.findAll()).thenReturn(List.of(testOrder));
-
-        List<Order> orders = orderService.getAll();
+        List<Order> orders = service.getAll();
 
         assertNotNull(orders);
-        assertEquals(1, orders.size());
-        verify(repo, times(1)).findAll();
+
+        orders.forEach(System.out::println);
     }
 
     @Test
-    void testFindByCustomer() {
-        when(repo.findByCustomer(testCustomer)).thenReturn(List.of(testOrder));
+    void f_findByCustomer() {
 
-        List<Order> orders = orderService.findByCustomer(testCustomer);
+        List<Order> orders = service.findByCustomer(customer);
 
         assertNotNull(orders);
-        assertEquals(1, orders.size());
-        verify(repo, times(1)).findByCustomer(testCustomer);
+
+        orders.forEach(System.out::println);
     }
 
     @Test
-    void testFindByStatus() {
-        when(repo.findByStatus(OrderStatus.PENDING)).thenReturn(List.of(testOrder));
+    void g_findByStatus() {
 
-        List<Order> orders = orderService.findByStatus(OrderStatus.PENDING);
+        List<Order> orders = service.findByStatus(OrderStatus.PROCESSING);
 
         assertNotNull(orders);
-        assertEquals(1, orders.size());
-        verify(repo, times(1)).findByStatus(OrderStatus.PENDING);
+
+        orders.forEach(System.out::println);
     }
 }

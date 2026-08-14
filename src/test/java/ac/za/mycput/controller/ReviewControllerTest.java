@@ -39,7 +39,6 @@ class ReviewControllerTest {
     @BeforeAll
     static void setup() {
         customer = CustomerFactory.createCustomer(
-                1L,
                 "Siphokazi",
                 "Malingatshoni",
                 "siphokazi.review.test@example.com",

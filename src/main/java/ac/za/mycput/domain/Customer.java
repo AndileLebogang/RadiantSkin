@@ -21,7 +21,14 @@ public class Customer extends User {
     }
 
     private Customer(Builder builder) {
-        super(builder.userId, builder.firstName, builder.lastName, builder.email, builder.password);
+        super(
+                builder.userId,
+                builder.firstName,
+                builder.lastName,
+                builder.email,
+                builder.password,
+                builder.role
+        );
         this.phoneNumber = builder.phoneNumber;
         this.addresses = builder.addresses;
         this.cart = builder.cart;
@@ -62,6 +69,7 @@ public class Customer extends User {
         private String lastName;
         private String email;
         private String password;
+        private Role role;
         private String phoneNumber;
         private List<Address> addresses = new ArrayList<>();
         private Cart cart;
@@ -91,6 +99,11 @@ public class Customer extends User {
             return this;
         }
 
+        public Builder setRole(Role role) {
+            this.role = role;
+            return this;
+        }
+
         public Builder setPhoneNumber(String phoneNumber) {
             this.phoneNumber = phoneNumber;
             return this;
@@ -105,12 +118,14 @@ public class Customer extends User {
             this.cart = cart;
             return this;
         }
+
         public Builder copy(Customer customer) {
             this.userId = customer.getUserId();
             this.firstName = customer.getFirstName();
             this.lastName = customer.getLastName();
             this.email = customer.getEmail();
             this.password = customer.getPassword();
+            this.role = customer.getRole();
             this.phoneNumber = customer.getPhoneNumber();
             this.addresses = customer.getAddresses();
             this.cart = customer.getCart();
