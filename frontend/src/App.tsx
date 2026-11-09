@@ -16,6 +16,9 @@ import { useScrollReveal } from './useScrollReveal'
 import RegisterPage from './pages/Register'
 import LoginPage from './pages/Login'
 import AccountPage from './pages/Account'
+import AboutPage from './pages/About'
+import ContactPage from './pages/Contact'
+import AdminPage from './pages/Admin'
 import {
   HomePage,
   ShopPage,
@@ -28,7 +31,7 @@ import {
 
 function Shell() {
   const { count, notice } = useStore()
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const [menu, setMenu] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,6 +39,14 @@ function Shell() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [location.pathname])
+  async function logOut() {
+    try {
+      await signOut()
+    } finally {
+      setMenu(false)
+      navigate('/')
+    }
+  }
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const value = new FormData(event.currentTarget).get('search')?.toString().trim() || ''
@@ -62,8 +73,15 @@ function Shell() {
             <Link to="/shop?category=skin">Skin care</Link>
             <Link to="/shop?category=body">Body care</Link>
             <Link to="/shop?category=hair">Hair care</Link>
+            <NavLink to="/about">About us</NavLink>
+            <NavLink to="/contact">Contact</NavLink>
           </nav>
           <div className="header-actions">
+            {user?.role === 'ADMIN' && (
+              <Link className="account-link" to="/admin">
+                Admin
+              </Link>
+            )}
             {user ? (
               <Link className="account-link" to="/account">
                 My account
@@ -77,6 +95,11 @@ function Shell() {
                   Create account
                 </Link>
               </>
+            )}
+            {user && (
+              <button className="account-link logout-button" type="button" onClick={logOut}>
+                Log out
+              </button>
             )}
             <Link className="track-link" to="/orders">
               Track order
@@ -109,7 +132,15 @@ function Shell() {
               <Link to="/shop?category=skin">Skin care</Link>
               <Link to="/shop?category=body">Body care</Link>
               <Link to="/shop?category=hair">Hair care</Link>
+              <Link to="/about">About us</Link>
+              <Link to="/contact">Contact</Link>
+              {user?.role === 'ADMIN' && <Link to="/admin">Admin</Link>}
               <Link to="/orders">Track order</Link>
+              {user && (
+                <button type="button" onClick={logOut}>
+                  Log out
+                </button>
+              )}
               {user ? (
                 <Link to="/account">My account</Link>
               ) : (
@@ -148,6 +179,9 @@ function Shell() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
@@ -174,6 +208,8 @@ function Shell() {
           </div>
           <div className="footer-links">
             <span className="eyebrow">At your service</span>
+            <Link to="/about">About us</Link>
+            <Link to="/contact">Contact us</Link>
             <Link to="/bag">Your shopping bag</Link>
             <Link to="/orders">Track your order</Link>
             {user ? (

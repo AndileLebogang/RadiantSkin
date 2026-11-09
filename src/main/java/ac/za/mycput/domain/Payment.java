@@ -1,7 +1,11 @@
 package ac.za.mycput.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /*
 Makgato Tebogo 230116086
@@ -9,7 +13,9 @@ Makgato Tebogo 230116086
 
 @Entity
 public class Payment {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long paymentId;
     private double amount;
     private String transactionReference;
@@ -18,7 +24,8 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    @OneToOne
+    @JsonIgnore
+    @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
 

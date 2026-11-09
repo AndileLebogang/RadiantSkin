@@ -7,7 +7,7 @@ export default function LoginPage() {
   const { user, loading, signIn } = useAuth()
   const [params] = useSearchParams()
   const requested = params.get('next') || '/account'
-  const destination = ['/account', '/shop', '/checkout', '/bag'].includes(requested)
+  const customerDestination = ['/account', '/shop', '/checkout', '/bag'].includes(requested)
     ? requested
     : '/account'
   const [email, setEmail] = useState('')
@@ -49,7 +49,8 @@ export default function LoginPage() {
         Checking your account…
       </div>
     )
-  if (user) return <Navigate to={destination} replace />
+  // Admins go to the admin portal, customers go to their account page.
+  if (user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : customerDestination} replace />
   return (
     <div className="page section account-page">
       <div className="account-intro">
