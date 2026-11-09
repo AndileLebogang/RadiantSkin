@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750" viewBox="0 0 600 750" role="img" aria-labelledby="title">
+  <title id="title">RadiantSkin Soothing Body Lotion 400 ml product illustration</title>
+  <defs>
+    <linearGradient id="bottle" x2="1"><stop stop-color="#d4cbbb"/><stop offset=".4" stop-color="#faf5e8"/><stop offset="1" stop-color="#c8bda9"/></linearGradient>
+    <linearGradient id="pump" x2="1"><stop stop-color="#655d4c"/><stop offset=".5" stop-color="#938974"/><stop offset="1" stop-color="#5b5345"/></linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="#f7f3ee"/>
+  <ellipse cx="300" cy="668" rx="147" ry="18" fill="#d9cfc3" opacity=".55"/>
+  <path d="M286 145 H424 V169 H320 V214 H286Z" fill="url(#pump)"/>
+  <rect x="266" y="203" width="74" height="58" rx="8" fill="url(#pump)"/>
+  <path d="M262 250 Q262 283 219 302 Q188 317 188 358 V625 Q188 654 217 654 H383 Q412 654 412 625 V358 Q412 317 381 302 Q338 283 338 250Z" fill="url(#bottle)"/>
+  <rect x="201" y="374" width="198" height="223" rx="2" fill="#eee8da"/>
+  <g text-anchor="middle" fill="#4d493e" font-family="Georgia,serif">
+    <text x="300" y="423" font-size="25">radiantskin</text>
+    <path d="M258 444 H342" stroke="#9a927e"/>
+    <text x="300" y="480" font-size="19">SOOTHING</text>
+    <text x="300" y="508" font-size="19">BODY LOTION</text>
+    <text x="300" y="544" font-size="12" font-family="sans-serif">FRAGRANCE FREE</text>
+    <text x="300" y="576" font-size="12" font-family="sans-serif">400 ml</text>
+  </g>
+</svg>

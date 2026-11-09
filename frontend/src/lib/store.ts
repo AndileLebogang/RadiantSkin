@@ -1,3 +1,5 @@
+import { resolveProductImage } from './productImages'
+
 export type Category = 'skin' | 'hair' | 'body'
 export type Product = {
   productId: number
@@ -35,8 +37,6 @@ export type ReviewSubmission = {
   productId: number
   rating: number
   comment: string
-  email: string
-  password: string
 }
 export type Order = {
   orderId: number
@@ -123,8 +123,7 @@ export function normalizeProduct(value: unknown): Product {
   }
 }
 export function safeImageUrl(value: string): string {
-  if (/^https?:\/\//i.test(value) || /^\/(?!\/)/.test(value)) return value
-  return ''
+  return resolveProductImage(value)
 }
 function normalizeReview(value: unknown): Review {
   const review = record(value)
@@ -172,12 +171,14 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
         }
         throw new ApiError(
           response.status === 401
-            ? 'That email or password is incorrect.'
-            : response.status === 400 && path === '/review/submit'
-              ? 'Check your rating and review, then try again.'
-              : response.status === 404 && path.startsWith('/order/')
-                ? 'We couldn’t find that order. Check the order number and try again.'
-                : 'The store is temporarily unavailable. Please try again in a moment.',
+            ? 'Your session has expired. Log in again to post your review.'
+            : response.status === 403 && path === '/review/submit'
+              ? 'Only customer accounts can post reviews.'
+              : response.status === 400 && path === '/review/submit'
+                ? 'Check your rating and review, then try again.'
+                : response.status === 404 && path.startsWith('/order/')
+                  ? 'We couldn’t find that order. Check the order number and try again.'
+                  : 'The store is temporarily unavailable. Please try again in a moment.',
           response.status,
         )
       }

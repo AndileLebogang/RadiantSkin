@@ -3,6 +3,7 @@ package ac.za.mycput.controller;
 import ac.za.mycput.domain.*;
 import ac.za.mycput.repository.OrderRepository;
 import ac.za.mycput.repository.ProductRepository;
+import ac.za.mycput.repository.ReviewRepository;
 import ac.za.mycput.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ class AccountLoginTest {
     @Autowired CustomerService customers;
     @Autowired ProductRepository products;
     @Autowired OrderRepository orders;
+    @Autowired ReviewRepository reviews;
     @Autowired ObjectMapper json;
     Customer customer;
     final String password = "SchoolLogin!2026";
@@ -86,6 +88,32 @@ class AccountLoginTest {
         assertNull(failed.getRequest().getSession(false));
         mvc.perform(post("/auth/login").contentType("application/json").content("{}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void loggedInCustomerReviewPersistsWithoutCredentialsAndLogoutPreventsAnother() throws Exception {
+        MockHttpSession session = login(new MockHttpSession());
+        Product product = products.saveAndFlush(new SkinCareProduct.Builder().setName("Session review product")
+                .setPrice(new BigDecimal("25.00")).setStockQuantity(2).build());
+        var submission = Map.of("productId", product.getProductId(), "rating", 5,
+                "comment", "  Gentle on my skin  ", "customerId", customer.getUserId() + 1000);
+        var result = mvc.perform(post("/review/submit").session(session).contentType("application/json")
+                        .content(json.writeValueAsString(submission)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.comment").value("Gentle on my skin"))
+                .andExpect(jsonPath("$.customer").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist()).andReturn();
+        long id = json.readTree(result.getResponse().getContentAsString()).get("reviewId").asLong();
+        Review saved = reviews.findById(id).orElseThrow();
+        assertEquals(customer.getUserId(), saved.getCustomer().getUserId());
+        assertEquals(product.getProductId(), saved.getProduct().getProductId());
+        mvc.perform(get("/review/product/" + product.getProductId()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].reviewId").value(id));
+        mvc.perform(post("/auth/logout").session(session)).andExpect(status().isNoContent());
+        mvc.perform(post("/review/submit").contentType("application/json")
+                        .content(json.writeValueAsString(submission)))
+                .andExpect(status().isUnauthorized());
+        assertEquals(1, reviews.findByProduct(product).size());
     }
 
     @Test

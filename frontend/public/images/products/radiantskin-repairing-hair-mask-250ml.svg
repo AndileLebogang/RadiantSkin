@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750" viewBox="0 0 600 750" role="img" aria-labelledby="title">
+  <title id="title">RadiantSkin Repairing Hair Mask 250 ml product illustration</title>
+  <defs>
+    <linearGradient id="jar" x2="1"><stop stop-color="#b0ad97"/><stop offset=".45" stop-color="#dad8c5"/><stop offset="1" stop-color="#a09f8b"/></linearGradient>
+    <linearGradient id="lid" x2="0" y2="1"><stop stop-color="#71644e"/><stop offset="1" stop-color="#4d4538"/></linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="#f7f3ee"/>
+  <ellipse cx="300" cy="614" rx="181" ry="21" fill="#d9cfc3" opacity=".55"/>
+  <path d="M132 360 H468 V562 Q468 602 428 602 H172 Q132 602 132 562Z" fill="url(#jar)"/>
+  <rect x="123" y="312" width="354" height="70" rx="17" fill="url(#lid)"/>
+  <path d="M137 331 H463 M137 345 H463 M137 359 H463" stroke="#9b8d71" opacity=".45"/>
+  <rect x="151" y="410" width="298" height="151" rx="2" fill="#f7f1e8"/>
+  <g text-anchor="middle" fill="#4d493e" font-family="Georgia,serif">
+    <text x="300" y="447" font-size="27">radiantskin</text>
+    <path d="M253 463 H347" stroke="#9a927e"/>
+    <text x="300" y="491" font-size="19">REPAIRING HAIR MASK</text>
+    <text x="300" y="521" font-size="12" font-family="sans-serif">DEEP CONDITIONING CARE</text>
+    <text x="300" y="544" font-size="12" font-family="sans-serif">250 ml</text>
+  </g>
+</svg>

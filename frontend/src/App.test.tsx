@@ -41,6 +41,14 @@ const receipt = {
   totalAmount: 245,
   orderItems: [{ orderItemId: 1, quantity: 1, unitPrice: 245, product: { name: 'Daily Cream' } }],
 }
+const customer = {
+  userId: 9,
+  firstName: 'Sam',
+  lastName: 'Mokoena',
+  email: 'customer@example.com',
+  phoneNumber: '0712345678',
+  role: 'CUSTOMER',
+}
 async function fillCheckout(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByLabelText('First name')
   for (const [label, value] of Object.entries({
@@ -147,6 +155,7 @@ describe('Customer storefront', () => {
   it('loads product reviews and lets a registered customer post one', async () => {
     fetcher.mockImplementation(async (url) => {
       const path = String(url)
+      if (path.endsWith('/auth/session')) return new Response(JSON.stringify(customer))
       if (path.endsWith('/review/submit'))
         return new Response(
           JSON.stringify({
@@ -170,27 +179,31 @@ describe('Customer storefront', () => {
     expect(await screen.findByText('Gentle on my skin')).toBeTruthy()
     await user.selectOptions(screen.getByLabelText('Rating'), '5')
     await user.type(screen.getByLabelText('Your review'), 'Lovely texture')
-    await user.type(screen.getByLabelText('Account email'), 'customer@example.com')
-    await user.type(screen.getByLabelText('Account password'), 'SecretPassword123')
+    expect(await screen.findByText('Reviewing as Sam.')).toBeTruthy()
+    expect(screen.queryByLabelText('Account email')).toBeNull()
+    expect(screen.queryByLabelText('Account password')).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Post review' }))
     expect(await screen.findByText('Your review has been posted.')).toBeTruthy()
     expect(screen.getByText('Lovely texture')).toBeTruthy()
     const call = fetcher.mock.calls.find(([url]) => String(url).endsWith('/review/submit'))
     expect(call?.[1]?.method).toBe('POST')
-    expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
+    expect(call?.[1]?.credentials).toBe('include')
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({
       productId: 1,
       rating: 5,
       comment: 'Lovely texture',
-      email: 'customer@example.com',
     })
-    expect(localStorage.getItem('radiantskin.bag.v1') || '').not.toContain('SecretPassword123')
-    expect((screen.getByLabelText('Account password') as HTMLInputElement).value).toBe('')
   })
-  it('rejects incorrect review credentials without adding a review', async () => {
+  it('handles an expired review session without adding a review', async () => {
+    let expired = false
     fetcher.mockImplementation(async (url) => {
       const path = String(url)
-      if (path.endsWith('/review/submit'))
-        return new Response('Invalid email or password', { status: 401 })
+      if (path.endsWith('/auth/session'))
+        return expired ? new Response('', { status: 401 }) : new Response(JSON.stringify(customer))
+      if (path.endsWith('/review/submit')) {
+        expired = true
+        return new Response('Log in to post your review.', { status: 401 })
+      }
       return new Response(JSON.stringify(path.includes('/review/product/') ? [] : products))
     })
     const user = userEvent.setup()
@@ -198,14 +211,45 @@ describe('Customer storefront', () => {
     await screen.findByText('No reviews yet. Be the first to share your experience.')
     await user.selectOptions(screen.getByLabelText('Rating'), '4')
     await user.type(screen.getByLabelText('Your review'), 'Feels good')
-    await user.type(screen.getByLabelText('Account email'), 'customer@example.com')
-    await user.type(screen.getByLabelText('Account password'), 'WrongPassword')
     await user.click(screen.getByRole('button', { name: 'Post review' }))
-    expect((await screen.findByRole('alert')).textContent).toContain(
-      'email or password is incorrect',
-    )
+    expect((await screen.findByRole('alert')).textContent).toContain('Your session has expired')
     expect(screen.queryByText('Feels good')).toBeNull()
-    expect((screen.getByLabelText('Account password') as HTMLInputElement).value).toBe('')
+    expect(await screen.findByRole('link', { name: 'Log in to write a review' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Post review' })).toBeNull()
+  })
+  it('lets guests read reviews and returns them to the product after login', async () => {
+    fetcher.mockImplementation(async (url) => {
+      const path = String(url)
+      if (path.endsWith('/auth/session')) return new Response('', { status: 401 })
+      if (path.endsWith('/auth/login')) return new Response(JSON.stringify(customer))
+      return new Response(JSON.stringify(path.includes('/review/product/') ? [] : products))
+    })
+    const user = userEvent.setup()
+    open('/products/1')
+    await user.click(await screen.findByRole('link', { name: 'Log in to write a review' }))
+    await user.type(screen.getByLabelText('Email address'), customer.email)
+    await user.type(screen.getByLabelText('Password'), 'SecretPassword123')
+    await user.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(await screen.findByText('Reviewing as Sam.')).toBeTruthy()
+    expect(window.location.pathname).toBe('/products/1')
+    expect(screen.queryByLabelText('Account password')).toBeNull()
+  })
+  it('does not offer customer review submission to admins', async () => {
+    fetcher.mockImplementation(
+      async (url) =>
+        new Response(
+          JSON.stringify(
+            String(url).endsWith('/auth/session')
+              ? { ...customer, role: 'ADMIN' }
+              : String(url).includes('/review/product/')
+                ? []
+                : products,
+          ),
+        ),
+    )
+    open('/products/1')
+    expect(await screen.findByText('Only customer accounts can post reviews.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Post review' })).toBeNull()
   })
   it.each(['4111 1111 1111 1111', '0000 0000 0000 0002', '7'])(
     'places an order with card %s, clears the bag, and keeps card values private',

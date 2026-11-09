@@ -7,8 +7,9 @@ package ac.za.mycput.controller;
 
 import ac.za.mycput.domain.Review;
 import ac.za.mycput.domain.Customer;
-import ac.za.mycput.service.CustomerService;
+import ac.za.mycput.service.AccountSession;
 import ac.za.mycput.service.IReviewService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,16 +24,15 @@ import java.time.LocalDate;
 public class ReviewController {
 
     private final IReviewService service;
-    private final CustomerService customerService;
+    private final AccountSession sessions;
 
     @Autowired
-    public ReviewController(IReviewService service, CustomerService customerService) {
+    public ReviewController(IReviewService service, AccountSession sessions) {
         this.service = service;
-        this.customerService = customerService;
+        this.sessions = sessions;
     }
 
-    public record ReviewSubmission(Long productId, Integer rating, String comment,
-                                   String email, String password) {}
+    public record ReviewSubmission(Long productId, Integer rating, String comment) {}
 
     public record ReviewView(Long reviewId, int rating, String comment, LocalDate reviewDate) {
         public static ReviewView from(Review review) {
@@ -42,16 +42,16 @@ public class ReviewController {
     }
 
     @PostMapping("/submit")
-    public ResponseEntity<?> submit(@RequestBody ReviewSubmission submission) {
+    public ResponseEntity<?> submit(@RequestBody ReviewSubmission submission, HttpServletRequest request) {
+        var user = sessions.current(request);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Log in to post your review.");
+        }
+        if (!(user instanceof Customer customer)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only customer accounts can post reviews.");
+        }
         if (submission == null || submission.productId() == null || submission.rating() == null) {
             return ResponseEntity.badRequest().body("Choose a product and rating");
-        }
-
-        Customer customer;
-        try {
-            customer = customerService.login(submission.email(), submission.password());
-        } catch (IllegalArgumentException invalidCredentials) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
         }
 
         try {

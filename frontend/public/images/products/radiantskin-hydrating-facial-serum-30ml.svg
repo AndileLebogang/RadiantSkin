@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750" viewBox="0 0 600 750" role="img" aria-labelledby="title">
+  <title id="title">RadiantSkin Hydrating Facial Serum 30 ml product illustration</title>
+  <defs>
+    <linearGradient id="glass" x2="1"><stop stop-color="#76533a"/><stop offset=".3" stop-color="#b6875c"/><stop offset=".7" stop-color="#926645"/><stop offset="1" stop-color="#5f412d"/></linearGradient>
+    <linearGradient id="cap" x2="1"><stop stop-color="#d7cec4"/><stop offset=".45" stop-color="#faf7f1"/><stop offset="1" stop-color="#cfc4b7"/></linearGradient>
+  </defs>
+  <rect width="600" height="750" fill="#f7f3ee"/>
+  <ellipse cx="300" cy="654" rx="136" ry="17" fill="#d9cfc3" opacity=".55"/>
+  <path d="M270 166 Q270 122 300 122 Q330 122 330 166 V226 H270Z" fill="#e4ddd3"/>
+  <rect x="246" y="210" width="108" height="82" rx="9" fill="url(#cap)"/>
+  <path d="M249 285 Q249 314 217 336 Q200 349 200 378 V616 Q200 643 227 643 H373 Q400 643 400 616 V378 Q400 349 383 336 Q351 314 351 285Z" fill="url(#glass)"/>
+  <rect x="207" y="392" width="186" height="201" rx="2" fill="#f7f1e8"/>
+  <g text-anchor="middle" fill="#4d493e" font-family="Georgia,serif">
+    <text x="300" y="439" font-size="24">radiantskin</text>
+    <path d="M263 459 H337" stroke="#9a927e"/>
+    <text x="300" y="493" font-size="17">HYDRATING</text>
+    <text x="300" y="519" font-size="17">FACIAL SERUM</text>
+    <text x="300" y="552" font-size="12" font-family="sans-serif">HYALURONIC ACID</text>
+    <text x="300" y="576" font-size="12" font-family="sans-serif">30 ml</text>
+  </g>
+</svg>

@@ -32,7 +32,7 @@ The default Vite proxy forwards `/api/*` to `http://127.0.0.1:8080/*`, removing 
 | Catalogue, product details, search, category and stock filters | `GET /product/getAll`                                            |
 | Order status lookup                                            | `GET /order/read/{orderId}`                                      |
 | Product reviews                                                | `GET /review/product/{productId}`                                |
-| Submit a review as a registered customer                       | `POST /review/submit` with account email and password            |
+| Submit a review as a logged-in customer                        | `POST /review/submit` with session cookie, rating and comment     |
 | Shopping bag                                                   | Local browser storage; product IDs and quantities only           |
 | Checkout                                                       | `POST /checkout/place` saves an order and reduces stock atomically |
 
@@ -42,7 +42,9 @@ The bag enforces the available stock quantity, survives refreshes, and synchroni
 
 Customers can create an account from the storefront's **Create account** link. The form validates required details, shows duplicate-email and connection errors, and confirms success without storing the password in browser storage. Existing customers can log in at `/login`, see their details at `/account`, and log out. The storefront restores its signed-in state using `GET /auth/session`, not browser-stored identity or credentials. `POST /auth/login` creates a server session and `POST /auth/logout` invalidates it; all requests include cookies. Sessions expire after 30 minutes of inactivity or a backend restart. Header, footer, registration confirmation and mobile navigation link to login.
 
-Product pages load reviews from the review API. Registered customers can submit a rating and a 3–240 character review after confirming their email and password. The review response contains only its rating, comment, date, and ID; the form clears the password after a response and does not put credentials in browser storage. The existing legacy review write routes and other customer/order routes still need access control before public deployment.
+Product pages load reviews from the review API. Logged-in customers can submit a rating and a 3–240 character review without entering their details again. The API derives ownership from the server session, ignores client-supplied identity, and rejects missing sessions and non-customer accounts. Guests can read reviews and log in with a return link to the product. An expired session refreshes the account state and prompts a new login. The review response contains only its rating, comment, date, and ID. The existing legacy review write routes and other customer/order routes still need access control before public deployment.
+
+The three legacy `example.com` catalogue image URLs resolve to bundled RadiantSkin product illustrations in the API adapter, so existing databases need no data migration. The other nine current products use local retailer packshots. Missing, unsafe or failed image URLs use a local neutral image, with a text fallback if that asset also fails. Product cards, product details, the home collection and the bag share this image component.
 
 ## Current integration boundary
 

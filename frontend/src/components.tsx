@@ -12,19 +12,24 @@ import {
 import { useStore } from './StoreContext'
 import { categories, money } from './lib/store'
 import type { Product } from './lib/store'
+import { productImageFallback } from './lib/productImages'
 
 export function ProductImage({ product }: { product: Product }) {
   const [failedUrl, setFailedUrl] = useState('')
+  const [fallbackFailed, setFallbackFailed] = useState(false)
+  const source =
+    product.imageUrl && failedUrl !== product.imageUrl ? product.imageUrl : productImageFallback
+  const isFallback = source === productImageFallback
   return (
     <div
-      className={`product-image image-${product.category}${product.imageUrl.startsWith('/images/products/') ? ' image-packshot' : ''}`}
+      className={`product-image image-${product.category}${source.startsWith('/images/products/') ? ' image-packshot' : ''}`}
     >
-      {product.imageUrl && failedUrl !== product.imageUrl ? (
+      {!isFallback || !fallbackFailed ? (
         <img
-          src={product.imageUrl}
-          alt={product.name}
+          src={source}
+          alt={isFallback ? `${product.name} — image unavailable` : product.name}
           loading="lazy"
-          onError={() => setFailedUrl(product.imageUrl)}
+          onError={() => (isFallback ? setFallbackFailed(true) : setFailedUrl(product.imageUrl))}
         />
       ) : (
         <div className="image-placeholder">

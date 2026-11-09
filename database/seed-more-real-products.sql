@@ -1,0 +1,2 @@
+-- Superseded by seed-real-products.sql, which now contains all 36 products with local photos.
+-- Run that file instead. This file intentionally inserts nothing.

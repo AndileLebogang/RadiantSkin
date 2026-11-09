@@ -62,20 +62,18 @@ describe('Existing backend contracts', () => {
     await expect(api.products()).rejects.toMatchObject({ status: 500 })
   })
   it('does not expose customer credentials in its order model', async () => {
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            orderId: 1,
-            totalAmount: 20,
-            status: 'PENDING',
-            orderDate: '2026-09-09',
-            customer: { email: 'private@example.com', password: 'private' },
-            orderItems: [],
-          }),
-        ),
-      )
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          orderId: 1,
+          totalAmount: 20,
+          status: 'PENDING',
+          orderDate: '2026-09-09',
+          customer: { email: 'private@example.com', password: 'private' },
+          orderItems: [],
+        }),
+      ),
+    )
     const order = await createApi('/api', fetcher).order('1')
     expect(order).not.toHaveProperty('customer')
     expect(fetcher.mock.calls[0][0]).toBe('/api/order/read/1')
@@ -108,5 +106,20 @@ describe('Saved shopping bag', () => {
     expect(safeImageUrl('javascript:alert(1)')).toBe('')
     expect(safeImageUrl('//example.com/image')).toBe('')
     expect(safeImageUrl('/images/product.svg')).toBe('/images/product.svg')
+  })
+  it('repairs the three legacy catalogue image URLs with bundled product illustrations', () => {
+    for (const [file, asset] of [
+      ['serum', 'radiantskin-hydrating-facial-serum-30ml'],
+      ['hairmask', 'radiantskin-repairing-hair-mask-250ml'],
+      ['lotion', 'radiantskin-soothing-body-lotion-400ml'],
+    ]) {
+      expect(
+        normalizeProduct({ ...raw, imageUrl: `https://example.com/images/${file}.jpg` }).imageUrl,
+      ).toBe(`/images/products/${asset}.svg`)
+    }
+    expect(safeImageUrl('https://example.com/unknown.jpg')).toBe('')
+    expect(safeImageUrl(' https://cdn.store.co.za/product.jpg ')).toBe(
+      'https://cdn.store.co.za/product.jpg',
+    )
   })
 })
