@@ -2,6 +2,8 @@ package ac.za.mycput.service;
 
 import ac.za.mycput.domain.*;
 import ac.za.mycput.dto.OrderSummary;
+import ac.za.mycput.repository.CartRepository;
+import ac.za.mycput.repository.CustomerAddressRepository;
 import ac.za.mycput.repository.OrderRepository;
 import ac.za.mycput.repository.ProductRepository;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -21,10 +24,18 @@ public class StorefrontCheckoutService {
 
     private final OrderRepository orders;
     private final ProductRepository products;
+    private final CartRepository carts;
+    private final IPaymentService payments;
+    private final CustomerAddressRepository addresses;
 
-    public StorefrontCheckoutService(OrderRepository orders, ProductRepository products) {
+    public StorefrontCheckoutService(OrderRepository orders, ProductRepository products,
+                                     CartRepository carts, IPaymentService payments,
+                                     CustomerAddressRepository addresses) {
         this.orders = orders;
         this.products = products;
+        this.carts = carts;
+        this.payments = payments;
+        this.addresses = addresses;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -88,7 +99,69 @@ public class StorefrontCheckoutService {
             product.setStockQuantity(product.getStockQuantity() - quantity);
         }
         // Managed product updates and cascaded order items commit together, or all roll back.
-        return OrderSummary.from(orders.saveAndFlush(order));
+        Order saved = orders.saveAndFlush(order);
+
+        // Save the payment (card details are never stored)
+        payments.create(new Payment.Builder()
+                .setAmount(total.doubleValue())
+                .setPaymentMethod(PaymentMethod.CARD)
+                .setPaymentStatus(PaymentStatus.SUCCESSFUL)
+                .setTransactionReference(UUID.randomUUID().toString())
+                .setOrder(saved)
+                .build());
+
+        if (customer != null) {
+            // Save the delivery address (skipped if this customer already has the same one)
+            boolean alreadySaved = false;
+            for (Address existing : addresses.findByCustomer(customer)) {
+                if (same(existing.getStreet(), details.street)
+                        && same(existing.getCity(), details.city)
+                        && same(existing.getPostalCode(), details.postalCode)) {
+                    alreadySaved = true;
+                }
+            }
+            if (!alreadySaved) {
+                addresses.save(new Address.Builder()
+                        .setStreet(details.street)
+                        .setCity(details.city)
+                        .setProvince(details.province)
+                        .setPostalCode(details.postalCode)
+                        .setCountry(details.country)
+                        .setCustomer(customer)
+                        .build());
+            }
+
+            // Save the cart and cart items
+            Cart cart = carts.findByCustomer(customer);
+            if (cart == null) {
+                cart = new Cart.Builder().setCreatedDate(LocalDate.now())
+                        .setCustomer(customer).build();
+            }
+            if (cart.getCartItems() == null) cart.setCartItems(new ArrayList<>());
+            for (Product product : selected) {
+                int quantity = quantities.get(product.getProductId());
+                CartItem existing = null;
+                for (CartItem item : cart.getCartItems()) {
+                    if (item.getProduct() != null
+                            && item.getProduct().getProductId().equals(product.getProductId())) {
+                        existing = item;
+                    }
+                }
+                if (existing != null) {
+                    existing.setQuantity(quantity);
+                } else {
+                    cart.getCartItems().add(new CartItem.Builder()
+                            .setCart(cart).setProduct(product).setQuantity(quantity).build());
+                }
+            }
+            carts.save(cart);
+        }
+
+        return OrderSummary.from(saved);
+    }
+
+    private boolean same(String a, String b) {
+        return a != null && b != null && a.trim().equalsIgnoreCase(b.trim());
     }
 
     private CheckoutDetails normalize(CheckoutDetails input) {
@@ -107,7 +180,7 @@ public class StorefrontCheckoutService {
                 || !result.postalCode.matches("[0-9]{4}")
                 || !"South Africa".equals(result.country)
                 || !Set.of("Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
-                    "Mpumalanga", "North West", "Northern Cape", "Western Cape").contains(result.province)) {
+                "Mpumalanga", "North West", "Northern Cape", "Western Cape").contains(result.province)) {
             throw badRequest("Check your contact details and delivery address.");
         }
         return result;

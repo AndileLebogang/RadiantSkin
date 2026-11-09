@@ -24,6 +24,7 @@ public abstract class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long productId;
     protected String name;
+    @Column(length = 2000)
     protected String description;
     protected String brand;
     protected BigDecimal price;

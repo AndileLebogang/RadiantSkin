@@ -1,0 +1,64 @@
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+}
+.admin-tabs button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.admin-tabs button[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.7rem 0.6rem;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+.admin-table select,
+.admin-table input {
+  font: inherit;
+  padding: 0.3rem 0.4rem;
+}
+.admin-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 2.5rem;
+}
+.admin-form h2,
+.admin-form .wide,
+.admin-form-actions {
+  grid-column: 1 / -1;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  font: inherit;
+  padding: 0.5rem;
+}
+.admin-form-actions {
+  display: flex;
+  gap: 1rem;
+}

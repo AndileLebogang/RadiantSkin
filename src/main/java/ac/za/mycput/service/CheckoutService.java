@@ -70,7 +70,6 @@ public class CheckoutService implements ICheckoutService {
         }
 
         this.paymentService.create(new Payment.Builder()
-                .setPaymentId(System.currentTimeMillis())
                 .setAmount(total.doubleValue())
                 .setPaymentStatus(PaymentStatus.PENDING)
                 .setPaymentMethod(paymentMethod)
