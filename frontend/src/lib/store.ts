@@ -43,6 +43,12 @@ export type Review = {
   updatedAt: string | null
 }
 
+export type HelpfulVoteResponse = {
+  reviewId: number
+  helpfulCount: number
+  voted: boolean
+}
+
 export type ReviewPage = {
   content: Review[]
   page: number
@@ -252,6 +258,25 @@ function normalizeReviewStatistics(value: unknown): ReviewStatistics {
     distribution,
   }
 }
+
+function normalizeHelpfulVote(value: unknown): HelpfulVoteResponse {
+  const vote = record(value)
+
+  if (
+    !positiveId(vote.reviewId) ||
+    !Number.isInteger(vote.helpfulCount) ||
+    Number(vote.helpfulCount) < 0 ||
+    typeof vote.voted !== 'boolean'
+  ) {
+    throw new ApiError('The helpful vote response was invalid.')
+  }
+
+  return {
+    reviewId: vote.reviewId as number,
+    helpfulCount: vote.helpfulCount as number,
+    voted: vote.voted,
+  }
+}
 export class ApiError extends Error {
   status: number
   constructor(message: string, status = 0) {
@@ -415,15 +440,49 @@ async updateReview(
   return normalizeReview(body)
 },
 
-async deleteReview(reviewId: number): Promise<void> {
-  if (!positiveId(reviewId)) {
-    throw new ApiError('Choose a valid review.', 400)
-  }
+    async deleteReview(reviewId: number): Promise<void> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
 
-  await request(`/review/my-reviews/${reviewId}`, undefined, {
-    method: 'DELETE',
-  })
-},
+      await request(`/review/my-reviews/${reviewId}`, undefined, {
+        method: 'DELETE',
+      })
+    },
+
+    async helpfulVoteStatus(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful/status`)
+
+      return normalizeHelpfulVote(body)
+    },
+
+    async addHelpfulVote(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful`, undefined, {
+        method: 'POST',
+      })
+
+      return normalizeHelpfulVote(body)
+    },
+
+    async removeHelpfulVote(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful`, undefined, {
+        method: 'DELETE',
+      })
+
+      return normalizeHelpfulVote(body)
+    },
   }
 }
 

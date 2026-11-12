@@ -3,11 +3,19 @@ import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { admin } from '../lib/admin'
-import type { AdminCustomer, AdminOrder, AdminProduct, ProductCategory } from '../lib/admin'
+import type {
+  AdminCustomer,
+  AdminOrder,
+  AdminProduct,
+  AdminReview,
+  AdminReviewPage,
+  ProductCategory,
+  ReviewModerationStatus,
+} from '../lib/admin'
 import { money } from '../lib/store'
 import './admin.css'
 
-type Tab = 'orders' | 'products' | 'customers'
+type Tab = 'orders' | 'products' | 'customers' | 'reviews'
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : 'Something went wrong. Please try again.'
@@ -46,7 +54,7 @@ export default function AdminPage() {
         </p>
       </div>
       <div className="admin-tabs" role="group" aria-label="Admin sections">
-        {(['orders', 'products', 'customers'] as Tab[]).map((item) => (
+        {(['orders', 'products', 'customers', 'reviews'] as Tab[]).map((item) => (
           <button key={item} aria-pressed={tab === item} onClick={() => setTab(item)}>
             {item[0].toUpperCase() + item.slice(1)}
           </button>
@@ -55,6 +63,7 @@ export default function AdminPage() {
       {tab === 'orders' && <OrdersTab />}
       {tab === 'products' && <ProductsTab />}
       {tab === 'customers' && <CustomersTab />}
+      {tab === 'reviews' && <ReviewsTab />}
     </section>
   )
 }
@@ -452,6 +461,199 @@ function CustomersTab() {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+function ReviewsTab() {
+  const [status, setStatus] = useState<ReviewModerationStatus>('HIDDEN')
+  const [reviews, setReviews] = useState<AdminReview[]>([])
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+  const [totalElements, setTotalElements] = useState(0)
+  const [loadingReviews, setLoadingReviews] = useState(true)
+  const [savingId, setSavingId] = useState<number | null>(null)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  const loadReviews = useCallback(async () => {
+    setLoadingReviews(true)
+    setError('')
+
+    try {
+      const result: AdminReviewPage = await admin.moderationReviews(status, page, 10)
+
+      setReviews(result.content)
+      setTotalPages(result.totalPages)
+      setTotalElements(result.totalElements)
+    } catch (e) {
+      setError(message(e))
+    } finally {
+      setLoadingReviews(false)
+    }
+  }, [status, page])
+
+  useEffect(() => {
+    void loadReviews()
+  }, [loadReviews])
+
+  async function changeStatus(reviewId: number, newStatus: ReviewModerationStatus) {
+    setSavingId(reviewId)
+    setError('')
+    setSuccess('')
+
+    try {
+      if (newStatus === 'APPROVED') {
+        await admin.approveReview(reviewId)
+        setSuccess(`Review #${reviewId} has been approved.`)
+      } else {
+        await admin.hideReview(reviewId)
+        setSuccess(`Review #${reviewId} has been hidden.`)
+      }
+
+      await loadReviews()
+    } catch (e) {
+      setError(message(e))
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  function changeFilter(newStatus: ReviewModerationStatus) {
+    setStatus(newStatus)
+    setPage(0)
+    setSuccess('')
+  }
+
+  return (
+    <div className="admin-reviews">
+      <div className="admin-review-heading">
+        <div>
+          <h2>Review moderation</h2>
+          <p>Review customer feedback and manage its visibility.</p>
+        </div>
+        <p>
+          <strong>{totalElements}</strong> reviews
+        </p>
+      </div>
+
+      <div className="admin-tabs" role="group" aria-label="Review status filter">
+        <button
+          type="button"
+          aria-pressed={status === 'HIDDEN'}
+          onClick={() => changeFilter('HIDDEN')}
+        >
+          Hidden
+        </button>
+        <button
+          type="button"
+          aria-pressed={status === 'APPROVED'}
+          onClick={() => changeFilter('APPROVED')}
+        >
+          Approved
+        </button>
+      </div>
+
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
+
+      {success && (
+        <p className="admin-review-success" role="status">
+          {success}
+        </p>
+      )}
+
+      {loadingReviews ? (
+        <p role="status">Loading reviews...</p>
+      ) : reviews.length === 0 ? (
+        <div className="admin-review-empty">
+          <h3>No {status.toLowerCase()} reviews</h3>
+          <p>There are currently no reviews in this category.</p>
+        </div>
+      ) : (
+        <>
+          <div className="admin-review-list">
+            {reviews.map((review) => (
+              <article className="admin-review-card" key={review.reviewId}>
+                <div className="admin-review-card-header">
+                  <div>
+                    <h3>Review #{review.reviewId}</h3>
+                    <p>Product #{review.productId}</p>
+                  </div>
+                  <span className="admin-review-rating">
+                    {'★'.repeat(review.rating)}
+                    {'☆'.repeat(5 - review.rating)}
+                    <small>{review.rating}/5</small>
+                  </span>
+                </div>
+
+                <p className="admin-review-comment">
+                  {review.comment || 'No written comment provided.'}
+                </p>
+
+                <div className="admin-review-details">
+                  <span>Date: {review.reviewDate || 'Not available'}</span>
+                  <span>Helpful votes: {review.helpfulCount}</span>
+                  {review.verifiedPurchase && (
+                    <span className="admin-review-verified">Verified purchase</span>
+                  )}
+                </div>
+
+                <div className="admin-review-actions">
+                  {status === 'HIDDEN' ? (
+                    <button
+                      type="button"
+                      className="button"
+                      disabled={savingId === review.reviewId}
+                      onClick={() => changeStatus(review.reviewId, 'APPROVED')}
+                    >
+                      {savingId === review.reviewId ? 'Updating...' : 'Approve review'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="button secondary"
+                      disabled={savingId === review.reviewId}
+                      onClick={() => changeStatus(review.reviewId, 'HIDDEN')}
+                    >
+                      {savingId === review.reviewId ? 'Updating...' : 'Hide review'}
+                    </button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="admin-review-pagination">
+              <button
+                type="button"
+                className="button secondary"
+                disabled={page === 0}
+                onClick={() => setPage((current) => current - 1)}
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {page + 1} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                className="button secondary"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
