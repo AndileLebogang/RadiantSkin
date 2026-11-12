@@ -20,7 +20,7 @@ public class AdminController {
         this.service = service;
     }
 
-    @PostMapping("/create")
+    @PostMapping({"/create", "/register"})
     public ResponseEntity<?> create(@RequestBody Admin admin) {
         try {
             Admin saved = service.create(admin);

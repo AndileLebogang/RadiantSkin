@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 
-type Field = 'firstName' | 'lastName' | 'email' | 'phoneNumber' | 'password' | 'confirmPassword'
+type Field =
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'phoneNumber'
+  | 'employeeNumber'
+  | 'password'
+  | 'confirmPassword'
 type Values = Record<Field, string>
 
 const empty: Values = {
@@ -10,25 +17,26 @@ const empty: Values = {
   lastName: '',
   email: '',
   phoneNumber: '',
+  employeeNumber: '',
   password: '',
   confirmPassword: '',
 }
-const fields: Field[] = [
-  'firstName',
-  'lastName',
-  'email',
-  'phoneNumber',
-  'password',
-  'confirmPassword',
-]
-
-function validate(values: Values): Partial<Record<Field, string>> {
+function validate(values: Values, admin: boolean): Partial<Record<Field, string>> {
   const errors: Partial<Record<Field, string>> = {}
   if (!values.firstName.trim()) errors.firstName = 'Enter your first name.'
   if (!values.lastName.trim()) errors.lastName = 'Enter your last name.'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim()))
     errors.email = 'Enter a valid email address.'
-  if (!values.phoneNumber.trim()) errors.phoneNumber = 'Enter your phone number.'
+  if (admin) {
+    if (!values.employeeNumber.trim()) errors.employeeNumber = 'Enter your employee number.'
+    else if (values.employeeNumber.trim().length > 100)
+      errors.employeeNumber = 'Use no more than 100 characters.'
+    if (values.firstName.trim().length > 100) errors.firstName = 'Use no more than 100 characters.'
+    if (values.lastName.trim().length > 100) errors.lastName = 'Use no more than 100 characters.'
+    if (values.email.trim().length > 254) errors.email = 'Use no more than 254 characters.'
+    if (new TextEncoder().encode(values.password).length > 72)
+      errors.password = 'Use a password of no more than 72 bytes.'
+  } else if (!values.phoneNumber.trim()) errors.phoneNumber = 'Enter your phone number.'
   if (values.password.length < 8) errors.password = 'Use at least 8 characters.'
   if (values.confirmPassword !== values.password)
     errors.confirmPassword = 'The passwords do not match.'
@@ -36,7 +44,7 @@ function validate(values: Values): Partial<Record<Field, string>> {
   return errors
 }
 
-export default function RegisterPage() {
+export default function RegisterPage({ admin = false }: { admin?: boolean }) {
   const [values, setValues] = useState<Values>(empty)
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -45,7 +53,16 @@ export default function RegisterPage() {
   const [emailTaken, setEmailTaken] = useState(false)
   const [created, setCreated] = useState(false)
   const errorRef = useRef<HTMLDivElement>(null)
-  const errors = validate(values)
+  const errors = validate(values, admin)
+  const fields: Field[] = [
+    'firstName',
+    'lastName',
+    'email',
+    admin ? 'employeeNumber' : 'phoneNumber',
+    'password',
+    'confirmPassword',
+  ]
+  const loginPath = admin ? '/login?next=/admin' : '/login'
 
   useEffect(() => {
     if (serverError) errorRef.current?.focus()
@@ -74,14 +91,16 @@ export default function RegisterPage() {
     setSubmitting(true)
     try {
       const base = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
-      const response = await fetch(`${base}/customer/register`, {
+      const response = await fetch(`${base}/${admin ? 'admin' : 'customer'}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           firstName: values.firstName.trim(),
           lastName: values.lastName.trim(),
           email: values.email.trim().toLowerCase(),
-          phoneNumber: values.phoneNumber.trim(),
+          ...(admin
+            ? { employeeNumber: values.employeeNumber.trim() }
+            : { phoneNumber: values.phoneNumber.trim() }),
           password: values.password,
         }),
       })
@@ -111,9 +130,13 @@ export default function RegisterPage() {
   return (
     <div className="page section account-page">
       <div className="account-intro">
-        <span className="eyebrow">Your everyday care</span>
-        <h1>Create an account.</h1>
-        <p>Keep your details ready for the RadiantSkin experiences ahead.</p>
+        <span className="eyebrow">{admin ? 'RadiantSkin staff' : 'Your everyday care'}</span>
+        <h1>{admin ? 'Create an admin account.' : 'Create an account.'}</h1>
+        <p>
+          {admin
+            ? 'Register to manage products, orders, payments and customer reviews.'
+            : 'Keep your details ready for the RadiantSkin experiences ahead.'}
+        </p>
         <a className="text-link" href="#account-form">
           Start with your details
         </a>
@@ -122,15 +145,21 @@ export default function RegisterPage() {
         {created ? (
           <div className="account-success" role="status">
             <span className="eyebrow">Welcome to RadiantSkin</span>
-            <h2>Your account has been created.</h2>
-            <p>Your account is ready. Log in to continue shopping.</p>
-            <Link className="button" to="/login">
+            <h2>
+              {admin ? 'Your admin account has been created.' : 'Your account has been created.'}
+            </h2>
+            <p>
+              {admin
+                ? 'Log in with your new email and password to open the admin portal.'
+                : 'Your account is ready. Log in to continue shopping.'}
+            </p>
+            <Link className="button" to={loginPath}>
               Log in
             </Link>
           </div>
         ) : (
           <>
-            <span className="eyebrow">Join RadiantSkin</span>
+            <span className="eyebrow">{admin ? 'Admin registration' : 'Join RadiantSkin'}</span>
             <h2>Your details.</h2>
             <p className="account-panel-intro">All fields are required.</p>
             {serverError && (
@@ -149,7 +178,12 @@ export default function RegisterPage() {
                     ['password', 'Password', 'new-password', 'password'],
                     ['confirmPassword', 'Confirm password', 'new-password', 'password'],
                   ] as const
-                ).map(([field, label, autocomplete, type]) => {
+                ).map(([originalField, originalLabel, originalAutocomplete, originalType]) => {
+                  const field: Field =
+                    admin && originalField === 'phoneNumber' ? 'employeeNumber' : originalField
+                  const label = field === 'employeeNumber' ? 'Employee number' : originalLabel
+                  const autocomplete = field === 'employeeNumber' ? 'off' : originalAutocomplete
+                  const type = field === 'employeeNumber' ? 'text' : originalType
                   const errorMessage =
                     touched[field] || submitted
                       ? errors[field] ||
@@ -167,6 +201,7 @@ export default function RegisterPage() {
                         autoComplete={autocomplete}
                         value={values[field]}
                         onChange={change}
+                        disabled={submitting}
                         onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
                         aria-invalid={Boolean(errorMessage)}
                         aria-describedby={
@@ -193,13 +228,22 @@ export default function RegisterPage() {
                 })}
               </div>
               <button className="button account-submit" type="submit" disabled={submitting}>
-                {submitting ? 'Creating account…' : 'Create account'}
+                {submitting
+                  ? 'Creating account…'
+                  : admin
+                    ? 'Create admin account'
+                    : 'Create account'}
               </button>
             </form>
             <p className="account-switch">
               Already have an account?{' '}
-              <Link className="text-link" to="/login">
+              <Link className="text-link" to={loginPath}>
                 Log in
+              </Link>
+            </p>
+            <p className="account-switch">
+              <Link className="text-link" to={admin ? '/register' : '/admin/register'}>
+                {admin ? 'Register as a customer' : 'Register as admin'}
               </Link>
             </p>
           </>
