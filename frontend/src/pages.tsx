@@ -21,10 +21,10 @@ import {
 } from './components'
 import { useStore } from './StoreContext'
 import { useAuth } from './AuthContext'
-import CardPaymentForm from './CardPaymentForm'
+import PaymentForm from './PaymentForm'
 import ProductReviews from './ProductReviews'
-import { categories, createApi, money } from './lib/store'
-import type { CheckoutDetails, Order, Product } from './lib/store'
+import { categories, createApi, money, paymentMethodLabels } from './lib/store'
+import type { CheckoutDetails, Order, PaymentMethod, Product } from './lib/store'
 
 export { HomePage } from './HomePage'
 
@@ -398,6 +398,7 @@ export function CheckoutPage() {
   const { bag, products, clearBag, reload } = useStore()
   const [draft, setDraft] = useState<CheckoutDetails | null>(null)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
+  const [completedPayment, setCompletedPayment] = useState<PaymentMethod>('CARD')
   const [placing, setPlacing] = useState(false)
   const requestId = useRef(crypto.randomUUID())
   const formRef = useRef<HTMLFormElement>(null)
@@ -427,7 +428,7 @@ export function CheckoutPage() {
     requestId.current = crypto.randomUUID()
     setDraft(details as CheckoutDetails)
   }
-  async function placeOrder() {
+  async function placeOrder(paymentMethod: PaymentMethod) {
     if (!draft || !bag.length || invalid)
       throw new Error('Review your bag before placing your order.')
     const api = createApi(import.meta.env.VITE_API_BASE_URL || '/api')
@@ -437,7 +438,9 @@ export function CheckoutPage() {
       items: bag.map(({ productId, quantity }) => ({ productId, quantity })),
       details: draft,
       expectedTotal: total,
+      paymentMethod,
     })
+    setCompletedPayment(paymentMethod)
     setCompletedOrder(order)
     setDraft(null)
     formRef.current?.reset()
@@ -474,6 +477,10 @@ export function CheckoutPage() {
             Order number: <strong>{completedOrder.orderId}</strong>
           </p>
           <p>Your order has been placed and your bag is now empty.</p>
+          <p>
+            Payment method: <strong>{paymentMethodLabels[completedPayment]}</strong>
+          </p>
+          <p>Awaiting payment. No payment has been taken.</p>
           <p>
             Total: <strong>{money(completedOrder.totalAmount)}</strong>
           </p>
@@ -639,7 +646,7 @@ export function CheckoutPage() {
                       >
                         <FiArrowLeft /> Edit details
                       </button>
-                      <CardPaymentForm onPlaceOrder={placeOrder} onProcessingChange={setPlacing} />
+                      <PaymentForm onPlaceOrder={placeOrder} onProcessingChange={setPlacing} />
                     </>
                   </div>
                 )}

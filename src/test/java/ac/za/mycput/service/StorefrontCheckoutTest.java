@@ -3,9 +3,12 @@ package ac.za.mycput.service;
 import ac.za.mycput.domain.*;
 import ac.za.mycput.repository.OrderRepository;
 import ac.za.mycput.repository.ProductRepository;
+import ac.za.mycput.repository.PaymentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +33,7 @@ class StorefrontCheckoutTest {
     @Autowired StorefrontCheckoutService checkout;
     @Autowired ProductRepository products;
     @Autowired OrderRepository orders;
+    @Autowired PaymentRepository payments;
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     Product product;
@@ -95,6 +99,54 @@ class StorefrontCheckoutTest {
         assertEquals(409, priceError.getStatusCode().value());
         assertEquals(before, orders.count());
         assertEquals(3, product.getStockQuantity());
+    }
+
+    @ParameterizedTest
+    @EnumSource(PaymentMethod.class)
+    void savesSelectedPaymentMethodAsPendingAndDoesNotDuplicateOnRetry(PaymentMethod method) throws Exception {
+        var request = new StorefrontCheckoutService.Request(UUID.randomUUID(),
+                List.of(new StorefrontCheckoutService.Line(product.getProductId(), 1)),
+                details, new BigDecimal("24.95"), method);
+        var response = mvc.perform(post("/checkout/place").contentType("application/json")
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long id = json.readTree(response).get("orderId").asLong();
+        var saved = payments.findAll().stream()
+                .filter(payment -> payment.getOrder().getOrderId().equals(id)).toList();
+        assertEquals(1, saved.size());
+        assertEquals(method, saved.getFirst().getPaymentMethod());
+        assertEquals(PaymentStatus.PENDING, saved.getFirst().getPaymentStatus());
+        assertEquals(24.95, saved.getFirst().getAmount(), 0.001);
+
+        assertEquals(id, checkout.place(request).orderId());
+        assertEquals(2, product.getStockQuantity());
+        assertEquals(1, payments.findAll().stream()
+                .filter(payment -> payment.getOrder().getOrderId().equals(id)).count());
+    }
+
+    @Test
+    void rejectsUnknownPaymentMethodBeforeCreatingOrder() throws Exception {
+        long before = orders.count();
+        var payload = json.valueToTree(request(1, "24.95"));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) payload).put("paymentMethod", "UNKNOWN");
+        mvc.perform(post("/checkout/place").contentType("application/json")
+                .content(json.writeValueAsString(payload))).andExpect(status().isBadRequest());
+        assertEquals(before, orders.count());
+        assertEquals(3, product.getStockQuantity());
+    }
+
+    @Test
+    void supportsOlderCheckoutRequestsWithoutAPaymentMethod() throws Exception {
+        var payload = json.valueToTree(request(1, "24.95"));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) payload).remove("paymentMethod");
+        var response = mvc.perform(post("/checkout/place").contentType("application/json")
+                        .content(json.writeValueAsString(payload)))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long id = json.readTree(response).get("orderId").asLong();
+        var saved = payments.findAll().stream()
+                .filter(payment -> payment.getOrder().getOrderId().equals(id)).findFirst().orElseThrow();
+        assertEquals(PaymentMethod.CARD, saved.getPaymentMethod());
+        assertEquals(PaymentStatus.PENDING, saved.getPaymentStatus());
     }
 
     @Test
