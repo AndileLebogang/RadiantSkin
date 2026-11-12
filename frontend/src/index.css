@@ -1515,6 +1515,25 @@ details p {
   fill: none;
 }
 
+.review-statistics-stars .star-half {
+  position: relative;
+  display: inline-flex;
+}
+
+.review-statistics-stars .star-half-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.review-statistics-stars .star-half-overlay .star-filled {
+  color: #d4a43b;
+  fill: #d4a43b;
+}
+
 .review-statistics-summary p {
   margin: 5px 0 0;
   font-size: 0.85rem;
@@ -1545,4 +1564,22 @@ details p {
   height: 100%;
   background: #d4a43b;
   border-radius: 20px;
+}
+
+.verified-purchase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: #f3eee5;
+  color: #755139;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.verified-purchase-badge span {
+  color: #63805c;
+  font-weight: 700;
 }

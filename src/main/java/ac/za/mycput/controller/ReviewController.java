@@ -1,3 +1,4 @@
+
 package ac.za.mycput.controller;
 
 /*
@@ -12,6 +13,7 @@ import ac.za.mycput.domain.Role;
 import ac.za.mycput.domain.User;
 import ac.za.mycput.service.AccountSession;
 import ac.za.mycput.service.IReviewService;
+import ac.za.mycput.service.ReviewHelpfulVoteService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -32,10 +34,15 @@ public class ReviewController {
 
     private final IReviewService service;
     private final AccountSession sessions;
+    private final ReviewHelpfulVoteService helpfulVoteService;
 
-    public ReviewController(IReviewService service, AccountSession sessions) {
+    public ReviewController(
+            IReviewService service,
+            AccountSession sessions,
+            ReviewHelpfulVoteService helpfulVoteService) {
         this.service = service;
         this.sessions = sessions;
+        this.helpfulVoteService = helpfulVoteService;
     }
 
     // --------------------------------------------------
@@ -93,6 +100,11 @@ public class ReviewController {
             int totalPages,
             boolean last) {}
 
+    public record HelpfulVoteResponse(
+            Long reviewId,
+            long helpfulCount,
+            boolean voted) {}
+
     // --------------------------------------------------
     // Authentication helpers
     // --------------------------------------------------
@@ -147,34 +159,116 @@ public class ReviewController {
         }
     }
 
-  
-@GetMapping("/product/{productId}/statistics")
-public ResponseEntity<?> getStatistics(
-        @PathVariable Long productId) {
+    @GetMapping("/product/{productId}/statistics")
+    public ResponseEntity<?> getStatistics(
+            @PathVariable Long productId) {
 
-    try {
-        Double average = service.getAverageRating(productId);
-        long total = service.getReviewCount(productId);
+        try {
+            Double average = service.getAverageRating(productId);
+            long total = service.getReviewCount(productId);
 
-        List<RatingCount> distribution =
-                service.getRatingDistribution(productId)
-                        .stream()
-                        .map(row -> new RatingCount(
-                                ((Number) row[0]).intValue(),
-                                ((Number) row[1]).longValue()))
-                        .toList();
+            List<RatingCount> distribution =
+                    service.getRatingDistribution(productId)
+                            .stream()
+                            .map(row -> new RatingCount(
+                                    ((Number) row[0]).intValue(),
+                                    ((Number) row[1]).longValue()))
+                            .toList();
 
-        return ResponseEntity.ok(new ReviewStatistics(
-                average,
-                total,
-                distribution
-        ));
+            return ResponseEntity.ok(new ReviewStatistics(
+                    average,
+                    total,
+                    distribution
+            ));
 
-    } catch (IllegalArgumentException exception) {
-        return ResponseEntity.badRequest()
-                .body(exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest()
+                    .body(exception.getMessage());
+        }
     }
-}
+
+    // --------------------------------------------------
+    // Helpful voting
+    // --------------------------------------------------
+
+    @PostMapping("/{reviewId}/helpful")
+    public ResponseEntity<?> addHelpfulVote(
+            @PathVariable Long reviewId,
+            HttpServletRequest request) {
+
+        Customer customer = currentCustomer(request);
+
+        if (customer == null) {
+            User user = sessions.current(request);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Log in to vote on a review.");
+            }
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only customers can vote on reviews.");
+        }
+
+        long helpfulCount = helpfulVoteService.addHelpfulVote(
+                reviewId, customer);
+
+        return ResponseEntity.ok(new HelpfulVoteResponse(
+                reviewId,
+                helpfulCount,
+                true
+        ));
+    }
+
+    @DeleteMapping("/{reviewId}/helpful")
+    public ResponseEntity<?> removeHelpfulVote(
+            @PathVariable Long reviewId,
+            HttpServletRequest request) {
+
+        Customer customer = currentCustomer(request);
+
+        if (customer == null) {
+            User user = sessions.current(request);
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Log in to remove your vote.");
+            }
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only customers can remove helpful votes.");
+        }
+
+        long helpfulCount = helpfulVoteService.removeHelpfulVote(
+                reviewId, customer);
+
+        return ResponseEntity.ok(new HelpfulVoteResponse(
+                reviewId,
+                helpfulCount,
+                false
+        ));
+    }
+
+    @GetMapping("/{reviewId}/helpful/status")
+    public ResponseEntity<?> getHelpfulVoteStatus(
+            @PathVariable Long reviewId,
+            HttpServletRequest request) {
+
+        long helpfulCount =
+                helpfulVoteService.getHelpfulVoteCount(reviewId);
+
+        Customer customer = currentCustomer(request);
+
+        boolean voted = customer != null
+                && helpfulVoteService.hasCustomerVoted(
+                        reviewId, customer.getUserId());
+
+        return ResponseEntity.ok(new HelpfulVoteResponse(
+                reviewId,
+                helpfulCount,
+                voted
+        ));
+    }
 
     // --------------------------------------------------
     // Customer review submission

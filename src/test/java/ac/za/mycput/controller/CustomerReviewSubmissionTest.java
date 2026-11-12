@@ -6,6 +6,7 @@ import ac.za.mycput.domain.Review;
 import ac.za.mycput.repository.UserRepository;
 import ac.za.mycput.service.AccountSession;
 import ac.za.mycput.service.IReviewService;
+import ac.za.mycput.service.ReviewHelpfulVoteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -24,14 +25,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CustomerReviewSubmissionTest {
     final IReviewService reviews = mock(IReviewService.class);
-    final UserRepository users = mock(UserRepository.class);
-    final AccountSession sessions = new AccountSession(users);
+final UserRepository users = mock(UserRepository.class);
+final AccountSession sessions = new AccountSession(users);
+final ReviewHelpfulVoteService helpfulVotes = mock(ReviewHelpfulVoteService.class);
     MockMvc mvc;
     MockHttpSession session;
 
     @BeforeEach
     void setUp() {
-        mvc = MockMvcBuilders.standaloneSetup(new ReviewController(reviews, sessions)).build();
+        mvc = MockMvcBuilders.standaloneSetup(
+        new ReviewController(reviews, sessions, helpfulVotes)
+        ).build();
         Customer customer = mock(Customer.class);
         when(customer.getUserId()).thenReturn(9L);
         when(users.findById(9L)).thenReturn(Optional.of(customer));
