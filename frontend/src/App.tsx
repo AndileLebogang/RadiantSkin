@@ -188,6 +188,7 @@ function Shell() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/admin/register" element={<RegisterPage key="admin-register" admin />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/my-reviews" element={<MyReviewsPage />} />

@@ -12,6 +12,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,18 +35,20 @@ class AdminControllerTest {
         Admin newAdmin = AdminFactory.createAdmin(
                 "Naledi",
                 "Molefe",
-                "naledi@gmail.com",
+                "naledi-" + UUID.randomUUID() + "@example.test",
                 "Password123",
                 "EMP001"
         );
 
         ResponseEntity<Admin> response = restTemplate.postForEntity(
                 BASE_URL + "/create",
-                newAdmin,
+                Map.of("firstName", newAdmin.getFirstName(), "lastName", newAdmin.getLastName(),
+                        "email", newAdmin.getEmail(), "password", newAdmin.getPassword(),
+                        "employeeNumber", newAdmin.getEmployeeNumber()),
                 Admin.class
         );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
 
         admin = response.getBody();

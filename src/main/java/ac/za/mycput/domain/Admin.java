@@ -35,7 +35,7 @@ public class Admin extends User{
     @Override
     public String toString() {
         return "Admin [employeeNumber=" + employeeNumber + ", userId=" + userId + ", firstName=" + firstName
-                + ", lastName=" + lastName + ", email=" + email + ", password=" + password + "]";
+                + ", lastName=" + lastName + ", email=" + email + "]";
     }
 
     public static class Builder{

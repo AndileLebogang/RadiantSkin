@@ -60,6 +60,11 @@ export default function LoginPage() {
         <Link className="text-link" to="/register">
           New here? Create an account
         </Link>
+        <p className="account-switch">
+          <Link className="text-link" to="/admin/register">
+            Register as admin
+          </Link>
+        </p>
       </div>
       <div className="account-panel">
         <span className="eyebrow">Your account</span>

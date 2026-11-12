@@ -41,6 +41,11 @@ export default function AdminPage() {
         <Link className="button" to="/login?next=/admin">
           Log in
         </Link>
+        <p className="account-switch">
+          <Link className="text-link" to="/admin/register">
+            Create admin account
+          </Link>
+        </p>
       </section>
     )
 
