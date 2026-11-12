@@ -16,6 +16,7 @@ import { useScrollReveal } from './useScrollReveal'
 import RegisterPage from './pages/Register'
 import LoginPage from './pages/Login'
 import AccountPage from './pages/Account'
+import MyReviewsPage from './pages/MyReviews'
 import AboutPage from './pages/About'
 import ContactPage from './pages/Contact'
 import AdminPage from './pages/Admin'
@@ -83,9 +84,16 @@ function Shell() {
               </Link>
             )}
             {user ? (
-              <Link className="account-link" to="/account">
-                My account
-              </Link>
+              <>
+                {user.role === 'CUSTOMER' && (
+                  <Link className="account-link" to="/my-reviews">
+                    My reviews
+                  </Link>
+                )}
+                <Link className="account-link" to="/account">
+                  My account
+                </Link>
+              </>
             ) : (
               <>
                 <Link className="account-link" to="/login">
@@ -142,7 +150,10 @@ function Shell() {
                 </button>
               )}
               {user ? (
-                <Link to="/account">My account</Link>
+                <>
+                  {user.role === 'CUSTOMER' && <Link to="/my-reviews">My reviews</Link>}
+                  <Link to="/account">My account</Link>
+                </>
               ) : (
                 <>
                   <Link to="/login">Log in</Link>
@@ -179,6 +190,7 @@ function Shell() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/my-reviews" element={<MyReviewsPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin" element={<AdminPage />} />
@@ -213,7 +225,10 @@ function Shell() {
             <Link to="/bag">Your shopping bag</Link>
             <Link to="/orders">Track your order</Link>
             {user ? (
-              <Link to="/account">Your account</Link>
+              <>
+                {user.role === 'CUSTOMER' && <Link to="/my-reviews">My reviews</Link>}
+                <Link to="/account">Your account</Link>
+              </>
             ) : (
               <>
                 <Link to="/login">Log in to your account</Link>

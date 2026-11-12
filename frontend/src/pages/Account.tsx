@@ -73,6 +73,11 @@ export default function AccountPage() {
           <Link className="text-link" to="/orders">
             Track an order
           </Link>
+          {user.role === 'CUSTOMER' && (
+            <Link className="text-link" to="/my-reviews">
+              My reviews
+            </Link>
+          )}
         </div>
         {error && (
           <p className="account-alert" role="alert">

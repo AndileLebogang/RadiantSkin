@@ -39,12 +39,52 @@ export type CheckoutSubmission = {
   expectedTotal: number
   paymentMethod: PaymentMethod
 }
-export type Review = { reviewId: number; rating: number; comment: string; reviewDate: string }
+export type Review = {
+  reviewId: number
+  productId: number
+  rating: number
+  comment: string
+  reviewDate: string
+  verifiedPurchase: boolean
+  helpfulCount: number
+  updatedAt: string | null
+}
+
+export type HelpfulVoteResponse = {
+  reviewId: number
+  helpfulCount: number
+  voted: boolean
+}
+
+export type ReviewPage = {
+  content: Review[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+}
+
+export type ReviewStatistics = {
+  averageRating: number
+  totalReviews: number
+  distribution: {
+    rating: number
+    count: number
+  }[]
+
+}
 export type ReviewSubmission = {
   productId: number
   rating: number
   comment: string
 }
+
+export type ReviewUpdate = {
+  rating: number
+  comment: string
+}
+
 export type Order = {
   orderId: number
   orderDate: string
@@ -134,19 +174,114 @@ export function safeImageUrl(value: string): string {
 }
 function normalizeReview(value: unknown): Review {
   const review = record(value)
+
   if (
     !positiveId(review.reviewId) ||
+    !positiveId(review.productId) ||
     !Number.isInteger(review.rating) ||
     Number(review.rating) < 1 ||
     Number(review.rating) > 5 ||
     !text(review.comment).trim()
-  )
+  ) {
     throw new Error('A review could not be loaded. Please try again later.')
+  }
+
   return {
     reviewId: review.reviewId as number,
+    productId: review.productId as number,
     rating: review.rating as number,
     comment: text(review.comment),
     reviewDate: text(review.reviewDate),
+    verifiedPurchase: review.verifiedPurchase === true,
+    helpfulCount:
+      typeof review.helpfulCount === 'number' &&
+      Number.isInteger(review.helpfulCount) &&
+      review.helpfulCount >= 0
+        ? review.helpfulCount
+        : 0,
+    updatedAt: review.updatedAt === null ? null : text(review.updatedAt),
+  }
+}
+
+function normalizeReviewPage(value: unknown): ReviewPage {
+  const page = record(value)
+
+  if (
+    !Array.isArray(page.content) ||
+    !Number.isInteger(page.page) ||
+    !Number.isInteger(page.size) ||
+    !Number.isInteger(page.totalElements) ||
+    !Number.isInteger(page.totalPages) ||
+    typeof page.last !== 'boolean'
+  ) {
+    throw new ApiError('The reviews could not be loaded correctly.')
+  }
+
+  return {
+    content: page.content.map(normalizeReview),
+    page: page.page as number,
+    size: page.size as number,
+    totalElements: page.totalElements as number,
+    totalPages: page.totalPages as number,
+    last: page.last,
+  }
+}
+
+function normalizeReviewStatistics(value: unknown): ReviewStatistics {
+  const statistics = record(value)
+
+  if (
+    typeof statistics.averageRating !== 'number' ||
+    !Number.isFinite(statistics.averageRating) ||
+    typeof statistics.totalReviews !== 'number' ||
+    !Number.isInteger(statistics.totalReviews) ||
+    !Array.isArray(statistics.distribution)
+  ) {
+    throw new ApiError('The review statistics could not be loaded correctly.')
+  }
+
+  const distribution = statistics.distribution.map((item) => {
+    const rating = record(item)
+
+    if (
+      !Number.isInteger(rating.rating) ||
+      (rating.rating as number) < 1 ||
+      (rating.rating as number) > 5 ||
+      !Number.isInteger(rating.count) ||
+      (rating.count as number) < 0
+    ) {
+      throw new ApiError('The review statistics could not be loaded correctly.')
+    }
+
+    return {
+      rating: rating.rating as number,
+      count: rating.count as number,
+    }
+  })
+
+  return {
+    averageRating: statistics.averageRating,
+    totalReviews: statistics.totalReviews,
+    distribution,
+  }
+}
+
+function normalizeHelpfulVote(value: unknown): HelpfulVoteResponse {
+  const vote = record(value)
+
+  if (
+    !positiveId(vote.reviewId) ||
+    !Number.isInteger(vote.helpfulCount) ||
+    Number(vote.helpfulCount) < 0 ||
+    typeof vote.voted !== 'boolean'
+  ) {
+    throw new ApiError('The helpful vote response was invalid.')
+  }
+
+  return {
+    reviewId: vote.reviewId as number,
+    helpfulCount: vote.helpfulCount as number,
+    voted: vote.voted,
   }
 }
 export class ApiError extends Error {
@@ -189,6 +324,8 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
           response.status,
         )
       }
+      if (response.status === 204) return null
+
       const body: unknown = await response.json()
       if (body === null)
         throw new ApiError(
@@ -228,22 +365,134 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
         }),
       )
     },
-    async reviews(productId: number, signal?: AbortSignal): Promise<Review[]> {
-      if (!positiveId(productId)) throw new ApiError('Choose a valid product.', 400)
-      const body = await request(`/review/product/${productId}`, signal)
-      if (!Array.isArray(body)) throw new ApiError('Reviews could not be loaded.')
-      return body.map(normalizeReview)
-    },
+    async reviews(
+  productId: number,
+  signal?: AbortSignal,
+  sort = 'recent',
+  page = 0,
+  size = 5,
+): Promise<ReviewPage> {
+  if (!positiveId(productId)) {
+    throw new ApiError('Choose a valid product.', 400)
+  }
+
+  if (
+    !['recent', 'highest', 'lowest', 'helpful'].includes(sort) ||
+    !Number.isInteger(page) ||
+    page < 0 ||
+    !Number.isInteger(size) ||
+    size < 1 ||
+    size > 50
+  ) {
+    throw new ApiError('Invalid review pagination or sorting options.', 400)
+  }
+
+  const query = new URLSearchParams({
+    sort,
+    page: String(page),
+    size: String(size),
+  })
+
+  const body = await request(
+    `/review/product/${productId}?${query.toString()}`,
+    signal,
+  )
+
+  return normalizeReviewPage(body)
+},
+
+async reviewStatistics(productId: number): Promise<ReviewStatistics> {
+  if (!positiveId(productId)) {
+    throw new ApiError('Choose a valid product.', 400)
+  }
+
+  const body = await request(`/review/product/${productId}/statistics`)
+
+  return normalizeReviewStatistics(body)
+},
+
     async submitReview(input: ReviewSubmission): Promise<Review> {
-      const body = await request('/review/submit', undefined, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
+  const body = await request('/review/submit', undefined, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return normalizeReview(body)
+},
+
+async myReviews(): Promise<Review[]> {
+  const body = await request('/review/my-reviews')
+
+  if (!Array.isArray(body)) {
+    throw new ApiError('Invalid review response.', 500)
+  }
+
+  return body.map(normalizeReview)
+},
+
+async updateReview(
+  reviewId: number,
+  input: ReviewUpdate,
+): Promise<Review> {
+  if (!positiveId(reviewId)) {
+    throw new ApiError('Choose a valid review.', 400)
+  }
+
+  const body = await request(`/review/my-reviews/${reviewId}`, undefined, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+
+  return normalizeReview(body)
+},
+
+    async deleteReview(reviewId: number): Promise<void> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      await request(`/review/my-reviews/${reviewId}`, undefined, {
+        method: 'DELETE',
       })
-      return normalizeReview(body)
+    },
+
+    async helpfulVoteStatus(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful/status`)
+
+      return normalizeHelpfulVote(body)
+    },
+
+    async addHelpfulVote(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful`, undefined, {
+        method: 'POST',
+      })
+
+      return normalizeHelpfulVote(body)
+    },
+
+    async removeHelpfulVote(reviewId: number): Promise<HelpfulVoteResponse> {
+      if (!positiveId(reviewId)) {
+        throw new ApiError('Choose a valid review.', 400)
+      }
+
+      const body = await request(`/review/${reviewId}/helpful`, undefined, {
+        method: 'DELETE',
+      })
+
+      return normalizeHelpfulVote(body)
     },
   }
 }
+
 export function readBag(raw: string | null): BagItem[] {
   try {
     const value: unknown = JSON.parse(raw ?? '[]')
@@ -280,6 +529,7 @@ export function changeBag(
       )
     : [...bag, { productId, quantity: nextQuantity }]
 }
+
 export const money = (value: number) =>
   new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(value)
 export const categories: { id: Category; label: string; description: string }[] = [
