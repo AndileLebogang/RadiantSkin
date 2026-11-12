@@ -26,11 +26,18 @@ export type CheckoutDetails = {
   postalCode: string
   country: string
 }
+export type PaymentMethod = 'CARD' | 'EFT' | 'PAYPAL'
+export const paymentMethodLabels: Record<PaymentMethod, string> = {
+  CARD: 'Card',
+  EFT: 'EFT / Bank transfer',
+  PAYPAL: 'PayPal',
+}
 export type CheckoutSubmission = {
   requestId: string
   items: BagItem[]
   details: CheckoutDetails
   expectedTotal: number
+  paymentMethod: PaymentMethod
 }
 export type Review = { reviewId: number; rating: number; comment: string; reviewDate: string }
 export type ReviewSubmission = {

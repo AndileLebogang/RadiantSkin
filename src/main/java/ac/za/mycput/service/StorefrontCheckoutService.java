@@ -20,7 +20,12 @@ import java.util.*;
 @Service
 public class StorefrontCheckoutService {
     public record Line(Long productId, int quantity) { }
-    public record Request(UUID requestId, List<Line> items, CheckoutDetails details, BigDecimal expectedTotal) { }
+    public record Request(UUID requestId, List<Line> items, CheckoutDetails details,
+                          BigDecimal expectedTotal, PaymentMethod paymentMethod) {
+        public Request(UUID requestId, List<Line> items, CheckoutDetails details, BigDecimal expectedTotal) {
+            this(requestId, items, details, expectedTotal, PaymentMethod.CARD);
+        }
+    }
 
     private final OrderRepository orders;
     private final ProductRepository products;
@@ -101,11 +106,11 @@ public class StorefrontCheckoutService {
         // Managed product updates and cascaded order items commit together, or all roll back.
         Order saved = orders.saveAndFlush(order);
 
-        // Save the payment (card details are never stored)
+        // Choosing a method does not confirm payment; no payment provider is connected.
         payments.create(new Payment.Builder()
                 .setAmount(total.doubleValue())
-                .setPaymentMethod(PaymentMethod.CARD)
-                .setPaymentStatus(PaymentStatus.SUCCESSFUL)
+                .setPaymentMethod(request.paymentMethod() == null ? PaymentMethod.CARD : request.paymentMethod())
+                .setPaymentStatus(PaymentStatus.PENDING)
                 .setTransactionReference(UUID.randomUUID().toString())
                 .setOrder(saved)
                 .build());

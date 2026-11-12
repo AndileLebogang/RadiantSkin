@@ -275,6 +275,7 @@ describe('Customer storefront', () => {
       expect(calls).toHaveLength(1)
       const payload = JSON.parse(String(calls[0][1]?.body))
       expect(payload).toMatchObject({
+        paymentMethod: 'CARD',
         items: [{ productId: 1, quantity: 1 }],
         expectedTotal: 245,
         details: { email: 'customer@example.com', street: '1 Main Street' },
@@ -283,6 +284,7 @@ describe('Customer storefront', () => {
         'details',
         'expectedTotal',
         'items',
+        'paymentMethod',
         'requestId',
       ])
       expect(String(calls[0][1]?.body)).not.toMatch(/cardNumber|securityCode|expiry|cardholder/)
@@ -329,6 +331,72 @@ describe('Customer storefront', () => {
       JSON.parse(String(calls[1][1]?.body)).requestId,
     )
     await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+  }, 15000)
+  it.each([
+    ['EFT / Bank transfer', 'EFT'],
+    ['PayPal', 'PAYPAL'],
+  ])(
+    'places an awaiting-payment order using %s without requiring card details',
+    async (label, method) => {
+      fetcher.mockImplementation(
+        async (url) =>
+          new Response(
+            JSON.stringify(String(url).endsWith('/checkout/place') ? receipt : products),
+            {
+              status: String(url).endsWith('/checkout/place') ? 201 : 200,
+            },
+          ),
+      )
+      localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
+      const user = userEvent.setup()
+      open('/checkout')
+      await fillCheckout(user)
+      await user.type(screen.getByLabelText('Card number'), '4111111111111111')
+      await user.click(screen.getByRole('radio', { name: label }))
+      expect(screen.queryByLabelText('Card number')).toBeNull()
+      expect(screen.queryByLabelText('Security code')).toBeNull()
+      await user.click(screen.getByRole('button', { name: 'Place order' }))
+      await screen.findByRole('heading', { name: 'Thank you for your order.' })
+      expect(screen.getByText('Awaiting payment. No payment has been taken.')).toBeTruthy()
+      expect(screen.getByText(label, { selector: 'strong' })).toBeTruthy()
+      const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
+      expect(calls).toHaveLength(1)
+      const body = String(calls[0][1]?.body)
+      expect(JSON.parse(body).paymentMethod).toBe(method)
+      expect(body).not.toMatch(/4111111111111111|cardNumber|securityCode/)
+      await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+    },
+    15000,
+  )
+  it('clears card fields when switching methods and retains the chosen method on a failed retry', async () => {
+    let attempts = 0
+    fetcher.mockImplementation(async (url) => {
+      if (String(url).endsWith('/checkout/place')) {
+        if (++attempts === 1) throw new TypeError('Lost response')
+        return new Response(JSON.stringify(receipt), { status: 201 })
+      }
+      return new Response(JSON.stringify(products))
+    })
+    localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
+    const user = userEvent.setup()
+    open('/checkout')
+    await fillCheckout(user)
+    await fillCard(user, '4111111111111111')
+    await user.click(screen.getByRole('radio', { name: 'PayPal' }))
+    await user.click(screen.getByRole('radio', { name: 'Card' }))
+    expect((screen.getByLabelText('Card number') as HTMLInputElement).value).toBe('')
+    await user.click(screen.getByRole('radio', { name: 'EFT / Bank transfer' }))
+    await user.click(screen.getByRole('button', { name: 'Place order' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('reach the store')
+    expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+    expect(screen.getByRole('radio', { name: 'PayPal' }).matches(':disabled')).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Place order' }))
+    await screen.findByRole('heading', { name: 'Thank you for your order.' })
+    const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
+    const first = JSON.parse(String(calls[0][1]?.body))
+    const second = JSON.parse(String(calls[1][1]?.body))
+    expect(first.paymentMethod).toBe('EFT')
+    expect(second).toEqual(first)
   }, 15000)
   it('shows stock conflicts without clearing the bag', async () => {
     fetcher.mockImplementation(async (url) =>
