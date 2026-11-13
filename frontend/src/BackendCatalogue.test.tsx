@@ -1,3 +1,4 @@
+import { withCartServer } from './test/cartServer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -16,7 +17,7 @@ beforeEach(() => {
   localStorage.clear()
   window.history.replaceState({}, '', '/shop')
   vi.stubGlobal('scrollTo', vi.fn())
-  vi.stubGlobal('fetch', fetcher.mockReset())
+  vi.stubGlobal('fetch', withCartServer(fetcher.mockReset()))
 })
 afterEach(() => {
   cleanup()

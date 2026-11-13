@@ -46,14 +46,17 @@ final ReviewHelpfulVoteService helpfulVotes = mock(ReviewHelpfulVoteService.clas
 
     @Test
     void loggedInCustomerPostsWithoutCredentialsAndCannotOverrideTheSessionIdentity() throws Exception {
-        Review saved = new Review.Builder()
+        ac.za.mycput.domain.Product product = mock(ac.za.mycput.domain.Product.class);
+        when(product.getProductId()).thenReturn(7L);
+        Review saved = new Review.Builder().setProduct(product)
                 .setReviewId(21L)
                 .setRating(5)
                 .setComment("Gentle cleanser")
                 .setReviewDate(LocalDate.of(2026, 10, 25))
                 .build();
         when(reviews.addReview(9L, 7L, 5, "Gentle cleanser")).thenReturn(saved);
-        when(reviews.findByProductId(7L)).thenReturn(List.of(saved));
+        when(reviews.getApprovedReviews(eq(7L), eq("recent"), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(saved)));
 
         mvc.perform(post("/review/submit").session(session).contentType("application/json")
                         .content("""
@@ -66,7 +69,7 @@ final ReviewHelpfulVoteService helpfulVotes = mock(ReviewHelpfulVoteService.clas
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.password").doesNotExist());
         mvc.perform(get("/review/product/7")).andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].reviewId").value(21));
+                .andExpect(jsonPath("$.content[0].reviewId").value(21));
         verify(reviews).addReview(9L, 7L, 5, "Gentle cleanser");
     }
 

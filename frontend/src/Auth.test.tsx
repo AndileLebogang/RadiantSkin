@@ -1,3 +1,4 @@
+import { savedBag, withCartServer } from './test/cartServer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -43,7 +44,7 @@ beforeEach(() => {
       JSON.stringify([{ productId: 1, name: 'Daily Cream', price: 245, stockQuantity: 2 }]),
     )
   })
-  vi.stubGlobal('fetch', fetcher)
+  vi.stubGlobal('fetch', withCartServer(fetcher))
 })
 afterEach(() => {
   cleanup()
@@ -60,7 +61,8 @@ it('logs in an existing account, restores the session on reload, and logs out', 
   const user = userEvent.setup()
   open()
   await fillLogin(user)
-  expect(await screen.findByRole('heading', { name: 'Hello, Sam.' })).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: /A daily ritual/ })).toBeTruthy()
+  expect(window.location.pathname).toBe('/')
   expect(screen.getByRole('link', { name: 'My account' })).toBeTruthy()
   const call = fetcher.mock.calls.find(([url]) => String(url).endsWith('/auth/login'))
   expect(call?.[1]?.credentials).toBe('include')
@@ -73,7 +75,7 @@ it('logs in an existing account, restores the session on reload, and logs out', 
   cleanup()
   open('/account')
   expect(await screen.findByRole('heading', { name: 'Hello, Sam.' })).toBeTruthy()
-  await user.click(screen.getByRole('button', { name: 'Log out' }))
+  await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Log out' }))
   expect(await screen.findByRole('heading', { name: 'Welcome back.' })).toBeTruthy()
   expect(signedIn).toBe(false)
   cleanup()
@@ -111,17 +113,21 @@ it('ignores a forged browser account and requires a server session', async () =>
   expect(screen.queryByRole('heading', { name: 'Hello, Sam.' })).toBeNull()
 })
 
-it('returns to checkout after login and prefills the customer details', async () => {
+it('opens home after login from checkout, keeps the bag and still prefills checkout', async () => {
   localStorage.setItem('radiantskin.bag.v1', JSON.stringify([{ productId: 1, quantity: 1 }]))
   const user = userEvent.setup()
   open('/login?next=/checkout')
   await fillLogin(user)
+  expect(await screen.findByRole('heading', { name: /A daily ritual/ })).toBeTruthy()
+  expect(window.location.pathname).toBe('/')
+  await user.click(screen.getByRole('link', { name: 'Shopping bag, 1 items' }))
+  await user.click(await screen.findByRole('link', { name: 'Review checkout' }))
   await waitFor(() =>
     expect((screen.getByLabelText('First name') as HTMLInputElement).value).toBe('Sam'),
   )
   expect((screen.getByLabelText('Email address') as HTMLInputElement).value).toBe('sam@example.com')
   expect((screen.getByLabelText('Phone number') as HTMLInputElement).value).toBe('0712345678')
-  expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+  expect(await savedBag()).toEqual([{ productId: 1, quantity: 1 }])
 })
 
 it('allows access to login from the mobile menu', async () => {

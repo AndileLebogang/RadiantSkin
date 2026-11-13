@@ -15,8 +15,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class AddressServiceTest {
+    @Autowired private ac.za.mycput.repository.CustomerRepository fixtureCustomers;
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        fixtureCustomers.saveAndFlush(customer);
+    }
+
 
     @Autowired
     private AddressService service;
@@ -43,7 +51,6 @@ class AddressServiceTest {
         Address created = service.create(address);
 
         assertNotNull(created);
-        System.out.println("Created: " + created);
     }
 
     @Test
@@ -51,7 +58,6 @@ class AddressServiceTest {
         Address read = service.read(address.getAddressId());
 
         assertNotNull(read);
-        System.out.println("Read: " + read);
     }
 
     @Test
@@ -67,7 +73,6 @@ class AddressServiceTest {
         assertNotNull(updated);
         assertEquals("Johannesburg", updated.getCity());
 
-        System.out.println("Updated: " + updated);
     }
 
     @Test
@@ -76,7 +81,6 @@ class AddressServiceTest {
         boolean deleted = service.delete(address.getAddressId());
 
         assertTrue(deleted);
-        System.out.println("Deleted Successfully");
     }
 
     @Test
@@ -86,6 +90,5 @@ class AddressServiceTest {
 
         assertNotNull(addresses);
 
-        addresses.forEach(System.out::println);
     }
 }

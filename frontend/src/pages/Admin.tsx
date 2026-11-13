@@ -79,21 +79,18 @@ function OrdersTab() {
   const [paymentStatuses, setPaymentStatuses] = useState<string[]>([])
   const [error, setError] = useState('')
 
-  const load = useCallback(async () => {
-    try {
-      const [o, os, ps] = await Promise.all([
-        admin.orders(),
-        admin.orderStatuses(),
-        admin.paymentStatuses(),
-      ])
-      setOrders(o)
-      setOrderStatuses(os)
-      setPaymentStatuses(ps)
-      setError('')
-    } catch (e) {
-      setError(message(e))
-    }
-  }, [])
+  const load = useCallback(
+    () =>
+      Promise.all([admin.orders(), admin.orderStatuses(), admin.paymentStatuses()])
+        .then(([o, os, ps]) => {
+          setOrders(o)
+          setOrderStatuses(os)
+          setPaymentStatuses(ps)
+          setError('')
+        })
+        .catch((e: unknown) => setError(message(e))),
+    [],
+  )
   useEffect(() => {
     void load()
   }, [load])
@@ -229,14 +226,17 @@ function ProductsTab() {
   const [form, setForm] = useState<Form>(emptyForm)
   const [saving, setSaving] = useState(false)
 
-  const load = useCallback(async () => {
-    try {
-      setProducts(await admin.products())
-      setError('')
-    } catch (e) {
-      setError(message(e))
-    }
-  }, [])
+  const load = useCallback(
+    () =>
+      admin
+        .products()
+        .then((result) => {
+          setProducts(result)
+          setError('')
+        })
+        .catch((e: unknown) => setError(message(e))),
+    [],
+  )
   useEffect(() => {
     void load()
   }, [load])
@@ -481,26 +481,28 @@ function ReviewsTab() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const loadReviews = useCallback(async () => {
-    setLoadingReviews(true)
-    setError('')
-
-    try {
-      const result: AdminReviewPage = await admin.moderationReviews(status, page, 10)
-
-      setReviews(result.content)
-      setTotalPages(result.totalPages)
-      setTotalElements(result.totalElements)
-    } catch (e) {
-      setError(message(e))
-    } finally {
-      setLoadingReviews(false)
-    }
-  }, [status, page])
-
+  const [refreshVersion, setRefreshVersion] = useState(0)
   useEffect(() => {
-    void loadReviews()
-  }, [loadReviews])
+    let active = true
+    admin
+      .moderationReviews(status, page, 10)
+      .then((result: AdminReviewPage) => {
+        if (!active) return
+        setReviews(result.content)
+        setTotalPages(result.totalPages)
+        setTotalElements(result.totalElements)
+        setError('')
+      })
+      .catch((e: unknown) => {
+        if (active) setError(message(e))
+      })
+      .finally(() => {
+        if (active) setLoadingReviews(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [status, page, refreshVersion])
 
   async function changeStatus(reviewId: number, newStatus: ReviewModerationStatus) {
     setSavingId(reviewId)
@@ -516,7 +518,8 @@ function ReviewsTab() {
         setSuccess(`Review #${reviewId} has been hidden.`)
       }
 
-      await loadReviews()
+      setLoadingReviews(true)
+      setRefreshVersion((version) => version + 1)
     } catch (e) {
       setError(message(e))
     } finally {
@@ -525,6 +528,8 @@ function ReviewsTab() {
   }
 
   function changeFilter(newStatus: ReviewModerationStatus) {
+    if (newStatus === status && page === 0) return
+    setLoadingReviews(true)
     setStatus(newStatus)
     setPage(0)
     setSuccess('')
@@ -638,7 +643,10 @@ function ReviewsTab() {
                 type="button"
                 className="button secondary"
                 disabled={page === 0}
-                onClick={() => setPage((current) => current - 1)}
+                onClick={() => {
+                  setLoadingReviews(true)
+                  setPage((current) => current - 1)
+                }}
               >
                 Previous
               </button>
@@ -651,7 +659,10 @@ function ReviewsTab() {
                 type="button"
                 className="button secondary"
                 disabled={page >= totalPages - 1}
-                onClick={() => setPage((current) => current + 1)}
+                onClick={() => {
+                  setLoadingReviews(true)
+                  setPage((current) => current + 1)
+                }}
               >
                 Next
               </button>

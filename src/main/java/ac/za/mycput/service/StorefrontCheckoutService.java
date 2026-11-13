@@ -21,9 +21,13 @@ import java.util.*;
 public class StorefrontCheckoutService {
     public record Line(Long productId, int quantity) { }
     public record Request(UUID requestId, List<Line> items, CheckoutDetails details,
-                          BigDecimal expectedTotal, PaymentMethod paymentMethod) {
+                          BigDecimal expectedTotal, PaymentMethod paymentMethod, boolean localPayment) {
         public Request(UUID requestId, List<Line> items, CheckoutDetails details, BigDecimal expectedTotal) {
-            this(requestId, items, details, expectedTotal, PaymentMethod.CARD);
+            this(requestId, items, details, expectedTotal, PaymentMethod.CARD, false);
+        }
+        public Request(UUID requestId, List<Line> items, CheckoutDetails details,
+                       BigDecimal expectedTotal, PaymentMethod paymentMethod) {
+            this(requestId, items, details, expectedTotal, paymentMethod, false);
         }
     }
 
@@ -50,6 +54,11 @@ public class StorefrontCheckoutService {
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public OrderSummary place(Request request, Customer customer) {
+        return place(request, customer, customer == null ? null : carts.findByCustomer(customer));
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public OrderSummary place(Request request, Customer customer, Cart cart) {
         if (request == null || request.requestId() == null || request.details() == null
                 || request.items() == null || request.items().isEmpty() || request.items().size() > 100
                 || request.expectedTotal() == null || request.expectedTotal().signum() < 0) {
@@ -97,6 +106,17 @@ public class StorefrontCheckoutService {
                 .setStatus(OrderStatus.PROCESSING).setTotalAmount(total).setCustomer(customer).build();
         order.setCheckoutReference(reference);
         order.setCheckoutDetails(details);
+        Address address = new Address.Builder().setStreet(details.street).setCity(details.city)
+                .setProvince(details.province).setPostalCode(details.postalCode).setCountry(details.country)
+                .setCustomer(customer).build();
+        if (customer != null) {
+            address = addresses.findByCustomer(customer).stream().filter(existing ->
+                    same(existing.getStreet(), details.street) && same(existing.getCity(), details.city)
+                    && same(existing.getProvince(), details.province)
+                    && same(existing.getPostalCode(), details.postalCode)
+                    && same(existing.getCountry(), details.country)).findFirst().orElse(address);
+        }
+        order.setDeliveryAddress(addresses.save(address));
         for (Product product : selected) {
             int quantity = quantities.get(product.getProductId());
             order.getOrderItems().add(new OrderItem.Builder().setOrder(order).setProduct(product)
@@ -106,60 +126,21 @@ public class StorefrontCheckoutService {
         // Managed product updates and cascaded order items commit together, or all roll back.
         Order saved = orders.saveAndFlush(order);
 
-        // Choosing a method does not confirm payment; no payment provider is connected.
-        payments.create(new Payment.Builder()
+        // Local checkout explicitly records a school-project payment, never a gateway charge.
+        Payment payment = payments.create(new Payment.Builder()
                 .setAmount(total.doubleValue())
                 .setPaymentMethod(request.paymentMethod() == null ? PaymentMethod.CARD : request.paymentMethod())
-                .setPaymentStatus(PaymentStatus.PENDING)
-                .setTransactionReference(UUID.randomUUID().toString())
+                .setPaymentStatus(request.localPayment() ? PaymentStatus.SUCCESSFUL : PaymentStatus.PENDING)
+                .setTransactionReference(request.localPayment()
+                        ? "LOCAL-RS-" + reference.replace("-", "").substring(0, 12).toUpperCase(Locale.ROOT)
+                        : UUID.randomUUID().toString())
                 .setOrder(saved)
                 .build());
+        if (!saved.getPayments().contains(payment)) saved.getPayments().add(payment);
 
-        if (customer != null) {
-            // Save the delivery address (skipped if this customer already has the same one)
-            boolean alreadySaved = false;
-            for (Address existing : addresses.findByCustomer(customer)) {
-                if (same(existing.getStreet(), details.street)
-                        && same(existing.getCity(), details.city)
-                        && same(existing.getPostalCode(), details.postalCode)) {
-                    alreadySaved = true;
-                }
-            }
-            if (!alreadySaved) {
-                addresses.save(new Address.Builder()
-                        .setStreet(details.street)
-                        .setCity(details.city)
-                        .setProvince(details.province)
-                        .setPostalCode(details.postalCode)
-                        .setCountry(details.country)
-                        .setCustomer(customer)
-                        .build());
-            }
-
-            // Save the cart and cart items
-            Cart cart = carts.findByCustomer(customer);
-            if (cart == null) {
-                cart = new Cart.Builder().setCreatedDate(LocalDate.now())
-                        .setCustomer(customer).build();
-            }
-            if (cart.getCartItems() == null) cart.setCartItems(new ArrayList<>());
-            for (Product product : selected) {
-                int quantity = quantities.get(product.getProductId());
-                CartItem existing = null;
-                for (CartItem item : cart.getCartItems()) {
-                    if (item.getProduct() != null
-                            && item.getProduct().getProductId().equals(product.getProductId())) {
-                        existing = item;
-                    }
-                }
-                if (existing != null) {
-                    existing.setQuantity(quantity);
-                } else {
-                    cart.getCartItems().add(new CartItem.Builder()
-                            .setCart(cart).setProduct(product).setQuantity(quantity).build());
-                }
-            }
-            carts.save(cart);
+        if (cart != null) {
+            // Retries return above, preserving any items added after the original checkout.
+            cart.getCartItems().removeIf(item -> quantities.containsKey(item.getProduct().getProductId()));
         }
 
         return OrderSummary.from(saved);

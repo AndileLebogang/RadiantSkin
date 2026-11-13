@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class BodyCareProductControllerTest {
@@ -40,6 +41,7 @@ class BodyCareProductControllerTest {
 
     @Test
     void a_create() {
+        product.setProductId(null);
 
         ResponseEntity<BodyCareProduct> response =
                 restTemplate.postForEntity(
@@ -50,6 +52,7 @@ class BodyCareProductControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
+        product.setProductId(response.getBody().getProductId());
 
         System.out.println(response.getBody());
     }

@@ -165,19 +165,19 @@ export default function ProductReviews({ productId }: { productId: number }) {
   useEffect(() => {
     let active = true
 
-    if (accountLoading || user?.role !== 'CUSTOMER' || reviews.length === 0) {
+    if (accountLoading || user?.role !== 'CUSTOMER' || !reviewIdKey) {
       return () => {
         active = false
       }
     }
 
     Promise.all(
-      reviews.map(async (review) => {
+      (reviewIdKey ? reviewIdKey.split(',').map(Number) : []).map(async (reviewId) => {
         try {
-          const result = await api.helpfulVoteStatus(review.reviewId)
+          const result = await api.helpfulVoteStatus(reviewId)
 
           return {
-            reviewId: review.reviewId,
+            reviewId,
             voted: result.voted,
             helpfulCount: result.helpfulCount,
           }

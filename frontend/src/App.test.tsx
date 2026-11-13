@@ -1,3 +1,4 @@
+import { savedBag, withCartServer } from './test/cartServer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -38,6 +39,12 @@ const receipt = {
   orderId: 42,
   orderDate: '2026-10-25T12:00:00',
   status: 'PROCESSING',
+  payment: {
+    method: 'CARD',
+    status: 'SUCCESSFUL',
+    reference: 'LOCAL-RS-123456789ABC',
+    local: true,
+  },
   totalAmount: 245,
   orderItems: [{ orderItemId: 1, quantity: 1, unitPrice: 245, product: { name: 'Daily Cream' } }],
 }
@@ -85,7 +92,7 @@ beforeEach(() => {
         status: 200,
       }),
   )
-  vi.stubGlobal('fetch', fetcher)
+  vi.stubGlobal('fetch', withCartServer(fetcher))
   vi.stubGlobal('scrollTo', vi.fn())
 })
 afterEach(() => {
@@ -115,16 +122,12 @@ describe('Customer storefront', () => {
     await user.click(add)
     await user.click(add)
     expect((add as HTMLButtonElement).disabled).toBe(true)
-    await waitFor(() =>
-      expect(JSON.parse(localStorage.getItem('radiantskin.bag.v1') || '[]')).toEqual([
-        { productId: 1, quantity: 2 },
-      ]),
-    )
+    await waitFor(async () => expect(await savedBag()).toEqual([{ productId: 1, quantity: 2 }]))
     await user.click(screen.getByRole('link', { name: 'Shopping bag, 2 items' }))
     expect(screen.getByRole('heading', { name: 'Daily Cream' })).toBeTruthy()
     await user.click(screen.getByRole('button', { name: 'Remove Daily Cream from bag' }))
     expect(
-      screen.getByRole('heading', { name: 'Your bag is waiting for a little care' }),
+      await screen.findByRole('heading', { name: 'Your bag is waiting for a little care' }),
     ).toBeTruthy()
   })
   it('shows a recoverable error then reloads the real catalogue', async () => {
@@ -160,17 +163,34 @@ describe('Customer storefront', () => {
         return new Response(
           JSON.stringify({
             reviewId: 12,
+            productId: 1,
             rating: 5,
             comment: 'Lovely texture',
             reviewDate: '2026-10-25',
           }),
           { status: 201 },
         )
+      if (path.endsWith('/review/my-reviews')) return new Response('[]')
+      if (path.endsWith('/statistics'))
+        return new Response(JSON.stringify({ averageRating: 4, totalReviews: 1, distribution: [] }))
       if (path.includes('/review/product/'))
         return new Response(
-          JSON.stringify([
-            { reviewId: 11, rating: 4, comment: 'Gentle on my skin', reviewDate: '2026-10-24' },
-          ]),
+          JSON.stringify({
+            content: [
+              {
+                reviewId: 11,
+                productId: 1,
+                rating: 4,
+                comment: 'Gentle on my skin',
+                reviewDate: '2026-10-24',
+              },
+            ],
+            page: 0,
+            size: 5,
+            totalElements: 1,
+            totalPages: 1,
+            last: true,
+          }),
         )
       return new Response(JSON.stringify(products))
     })
@@ -200,11 +220,20 @@ describe('Customer storefront', () => {
       const path = String(url)
       if (path.endsWith('/auth/session'))
         return expired ? new Response('', { status: 401 }) : new Response(JSON.stringify(customer))
+      if (path.endsWith('/review/my-reviews')) return new Response('[]')
+      if (path.endsWith('/statistics'))
+        return new Response(JSON.stringify({ averageRating: 0, totalReviews: 0, distribution: [] }))
       if (path.endsWith('/review/submit')) {
         expired = true
         return new Response('Log in to post your review.', { status: 401 })
       }
-      return new Response(JSON.stringify(path.includes('/review/product/') ? [] : products))
+      return new Response(
+        JSON.stringify(
+          path.includes('/review/product/')
+            ? { content: [], page: 0, size: 5, totalElements: 0, totalPages: 0, last: true }
+            : products,
+        ),
+      )
     })
     const user = userEvent.setup()
     open('/products/1')
@@ -217,12 +246,18 @@ describe('Customer storefront', () => {
     expect(await screen.findByRole('link', { name: 'Log in to write a review' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Post review' })).toBeNull()
   })
-  it('lets guests read reviews and returns them to the product after login', async () => {
+  it('takes customers home after logging in from a product review', async () => {
     fetcher.mockImplementation(async (url) => {
       const path = String(url)
       if (path.endsWith('/auth/session')) return new Response('', { status: 401 })
       if (path.endsWith('/auth/login')) return new Response(JSON.stringify(customer))
-      return new Response(JSON.stringify(path.includes('/review/product/') ? [] : products))
+      return new Response(
+        JSON.stringify(
+          path.includes('/review/product/')
+            ? { content: [], page: 0, size: 5, totalElements: 0, totalPages: 0, last: true }
+            : products,
+        ),
+      )
     })
     const user = userEvent.setup()
     open('/products/1')
@@ -230,8 +265,8 @@ describe('Customer storefront', () => {
     await user.type(screen.getByLabelText('Email address'), customer.email)
     await user.type(screen.getByLabelText('Password'), 'SecretPassword123')
     await user.click(screen.getByRole('button', { name: 'Log in' }))
-    expect(await screen.findByText('Reviewing as Sam.')).toBeTruthy()
-    expect(window.location.pathname).toBe('/products/1')
+    expect(await screen.findByRole('heading', { name: /A daily ritual/ })).toBeTruthy()
+    expect(window.location.pathname).toBe('/')
     expect(screen.queryByLabelText('Account password')).toBeNull()
   })
   it('does not offer customer review submission to admins', async () => {
@@ -251,7 +286,7 @@ describe('Customer storefront', () => {
     expect(await screen.findByText('Only customer accounts can post reviews.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Post review' })).toBeNull()
   })
-  it.each(['4111 1111 1111 1111', '0000 0000 0000 0002', '7'])(
+  it.each(['4111 1111 1111 1111', '5555 5555 5555 4444', '378282246310005'])(
     'places an order with card %s, clears the bag, and keeps card values private',
     async (card) => {
       fetcher.mockImplementation(
@@ -275,6 +310,7 @@ describe('Customer storefront', () => {
       expect(calls).toHaveLength(1)
       const payload = JSON.parse(String(calls[0][1]?.body))
       expect(payload).toMatchObject({
+        localPayment: true,
         paymentMethod: 'CARD',
         items: [{ productId: 1, quantity: 1 }],
         expectedTotal: 245,
@@ -284,13 +320,14 @@ describe('Customer storefront', () => {
         'details',
         'expectedTotal',
         'items',
+        'localPayment',
         'paymentMethod',
         'requestId',
       ])
       expect(String(calls[0][1]?.body)).not.toMatch(/cardNumber|securityCode|expiry|cardholder/)
       expect(JSON.stringify(localStorage)).not.toContain('customer@example.com')
       expect(JSON.stringify(localStorage)).not.toContain('9876')
-      await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+      await waitFor(async () => expect(await savedBag()).toEqual([]))
       await user.click(screen.getByRole('link', { name: 'Shopping bag, 0 items' }))
       expect(
         await screen.findByRole('heading', { name: 'Your bag is waiting for a little care' }),
@@ -317,26 +354,26 @@ describe('Customer storefront', () => {
     const user = userEvent.setup()
     open('/checkout')
     await fillCheckout(user)
-    await fillCard(user, '1234')
+    await fillCard(user, '4111111111111111')
     await user.click(screen.getByRole('button', { name: 'Place order' }))
     expect((await screen.findByRole('alert')).textContent).toContain('reach the store')
-    expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+    expect(await savedBag()).toEqual([{ productId: 1, quantity: 1 }])
     expect((screen.getByLabelText('Security code') as HTMLInputElement).value).toBe('')
     expect(screen.queryByRole('heading', { name: 'Thank you for your order.' })).toBeNull()
-    await fillCard(user, '9999')
+    await fillCard(user, '5555555555554444')
     await user.click(screen.getByRole('button', { name: 'Place order' }))
     await screen.findByRole('heading', { name: 'Thank you for your order.' })
     const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
     expect(JSON.parse(String(calls[0][1]?.body)).requestId).toBe(
       JSON.parse(String(calls[1][1]?.body)).requestId,
     )
-    await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+    await waitFor(async () => expect(await savedBag()).toEqual([]))
   }, 15000)
   it.each([
     ['EFT / Bank transfer', 'EFT'],
     ['PayPal', 'PAYPAL'],
   ])(
-    'places an awaiting-payment order using %s without requiring card details',
+    'completes local checkout using %s without requiring card details',
     async (label, method) => {
       fetcher.mockImplementation(
         async (url) =>
@@ -355,16 +392,27 @@ describe('Customer storefront', () => {
       await user.click(screen.getByRole('radio', { name: label }))
       expect(screen.queryByLabelText('Card number')).toBeNull()
       expect(screen.queryByLabelText('Security code')).toBeNull()
-      await user.click(screen.getByRole('button', { name: 'Place order' }))
+      if (method === 'EFT') {
+        await user.click(screen.getByLabelText('I have completed the transfer.'))
+      } else {
+        await user.type(screen.getByLabelText('PayPal email address'), 'payer@example.test')
+        await user.click(screen.getByRole('button', { name: 'Review payment' }))
+      }
+      await user.click(
+        screen.getByRole('button', {
+          name: method === 'PAYPAL' ? 'Approve & place order' : 'Place order',
+        }),
+      )
       await screen.findByRole('heading', { name: 'Thank you for your order.' })
-      expect(screen.getByText('Awaiting payment. No payment has been taken.')).toBeTruthy()
+      expect(screen.getByText('Complete', { selector: 'strong' })).toBeTruthy()
+      expect(screen.getByText('LOCAL-RS-123456789ABC')).toBeTruthy()
       expect(screen.getByText(label, { selector: 'strong' })).toBeTruthy()
       const calls = fetcher.mock.calls.filter(([url]) => String(url).endsWith('/checkout/place'))
       expect(calls).toHaveLength(1)
       const body = String(calls[0][1]?.body)
       expect(JSON.parse(body).paymentMethod).toBe(method)
       expect(body).not.toMatch(/4111111111111111|cardNumber|securityCode/)
-      await waitFor(() => expect(localStorage.getItem('radiantskin.bag.v1')).toBe('[]'))
+      await waitFor(async () => expect(await savedBag()).toEqual([]))
     },
     15000,
   )
@@ -386,9 +434,10 @@ describe('Customer storefront', () => {
     await user.click(screen.getByRole('radio', { name: 'Card' }))
     expect((screen.getByLabelText('Card number') as HTMLInputElement).value).toBe('')
     await user.click(screen.getByRole('radio', { name: 'EFT / Bank transfer' }))
+    await user.click(screen.getByLabelText('I have completed the transfer.'))
     await user.click(screen.getByRole('button', { name: 'Place order' }))
     expect((await screen.findByRole('alert')).textContent).toContain('reach the store')
-    expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+    expect(await savedBag()).toEqual([{ productId: 1, quantity: 1 }])
     expect(screen.getByRole('radio', { name: 'PayPal' }).matches(':disabled')).toBe(true)
     await user.click(screen.getByRole('button', { name: 'Place order' }))
     await screen.findByRole('heading', { name: 'Thank you for your order.' })
@@ -411,10 +460,10 @@ describe('Customer storefront', () => {
     const user = userEvent.setup()
     open('/checkout')
     await fillCheckout(user)
-    await fillCard(user, '1234')
+    await fillCard(user, '4111111111111111')
     await user.click(screen.getByRole('button', { name: 'Place order' }))
     expect((await screen.findByRole('alert')).textContent).toContain('enough stock')
-    expect(localStorage.getItem('radiantskin.bag.v1')).toContain('"productId":1')
+    expect(await savedBag()).toEqual([{ productId: 1, quantity: 1 }])
   }, 15000)
   it('looks up an existing order and displays its latest status', async () => {
     fetcher.mockImplementation(

@@ -35,14 +35,14 @@ function ProductListing({ category }: ProductListingProps) {
   const navigate = useNavigate();
   const info = categoryInfo[category];
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<{productId: number; name: string; imageUrl: string; price: number}[]>([]);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch(`http://localhost:8080/${info.endpoint}/getAll`)
       .then((response) => response.json())
       .then((data) => setProducts(data));
-  }, [category]);
+  }, [info.endpoint]);
 
   const handleAddToCart = (productId: number) => {
     const stored = localStorage.getItem("customer");
@@ -109,7 +109,7 @@ function ProductListing({ category }: ProductListingProps) {
           )}
 
           <div className="product-grid">
-            {products.map((product: any) => (
+            {products.map((product) => (
               <div className="product-card card" key={product.productId}>
                 <img src={product.imageUrl} alt={product.name} />
                 <div className="product-info">

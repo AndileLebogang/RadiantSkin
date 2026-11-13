@@ -6,6 +6,7 @@ import { useAuth } from '../AuthContext'
 import { useStore } from '../StoreContext'
 import { ApiError, createApi } from '../lib/store'
 import type { Review } from '../lib/store'
+import './my-reviews.css'
 
 const api = createApi(import.meta.env.VITE_API_BASE_URL || '/api')
 
@@ -146,7 +147,7 @@ export default function MyReviewsPage() {
         <p>Your thoughts, ratings and experiences with the products you have tried.</p>
       </div>
 
-      <Link className="text-link" to="/account">
+      <Link className="text-link my-reviews-back" to="/account">
         <FiArrowLeft /> Back to your account
       </Link>
 
@@ -235,26 +236,27 @@ export default function MyReviewsPage() {
 
                 {isEditing ? (
                   <form className="my-review-edit-form" onSubmit={saveReview}>
-                    <label>Your rating</label>
+                    <fieldset className="my-review-rating-field">
+                      <legend>Your rating</legend>
+                      <div className="my-review-rating-picker">
+                        {Array.from({ length: 5 }, (_, index) => {
+                          const rating = index + 1
 
-                    <div className="my-review-rating-picker">
-                      {Array.from({ length: 5 }, (_, index) => {
-                        const rating = index + 1
-
-                        return (
-                          <button
-                            key={rating}
-                            type="button"
-                            className={rating <= editRating ? 'selected' : ''}
-                            aria-label={`${rating} star${rating === 1 ? '' : 's'}`}
-                            aria-pressed={editRating === rating}
-                            onClick={() => setEditRating(rating)}
-                          >
-                            <FiStar />
-                          </button>
-                        )
-                      })}
-                    </div>
+                          return (
+                            <button
+                              key={rating}
+                              type="button"
+                              className={rating <= editRating ? 'selected' : ''}
+                              aria-label={`${rating} star${rating === 1 ? '' : 's'}`}
+                              aria-pressed={editRating === rating}
+                              onClick={() => setEditRating(rating)}
+                            >
+                              <FiStar aria-hidden="true" />
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </fieldset>
 
                     <label htmlFor={`edit-review-${review.reviewId}`}>Your review</label>
                     <textarea

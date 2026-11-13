@@ -47,7 +47,7 @@ interface OrderData {
   status: string;
   totalAmount: number;
   customer: { firstName: string; lastName: string };
-  orderItems: any[];
+  orderItems: unknown[];
 }
 
 function AdminDashboard() {
@@ -81,7 +81,7 @@ function AdminDashboard() {
       fetch("http://localhost:8080/bodycare/getAll").then((r) => r.json()),
       fetch("http://localhost:8080/haircare/getAll").then((r) => r.json()),
     ]).then(function (results) {
-      const skinProducts = results[0].map(function (p: any) {
+      const skinProducts = results[0].map(function (p: ProductData) {
         return {
           productId: p.productId,
           name: p.name,
@@ -90,7 +90,7 @@ function AdminDashboard() {
           category: "Skin Care",
         };
       });
-      const bodyProducts = results[1].map(function (p: any) {
+      const bodyProducts = results[1].map(function (p: ProductData) {
         return {
           productId: p.productId,
           name: p.name,
@@ -99,7 +99,7 @@ function AdminDashboard() {
           category: "Body Care",
         };
       });
-      const hairProducts = results[2].map(function (p: any) {
+      const hairProducts = results[2].map(function (p: ProductData) {
         return {
           productId: p.productId,
           name: p.name,
@@ -199,7 +199,7 @@ function AdminDashboard() {
 
     const endpoint = newCategory;
 
-    const productData: any = {
+    const productData: Record<string, string | number> = {
       name: newName,
       description: newDescription,
       brand: newBrand,

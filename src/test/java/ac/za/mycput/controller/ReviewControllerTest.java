@@ -1,153 +1,144 @@
 package ac.za.mycput.controller;
 
-/*
-* Name: Siphokazi Malingatshoni
-* Student Number: 222868708
- */
-
-import ac.za.mycput.domain.Customer;
-import ac.za.mycput.domain.Review;
-import ac.za.mycput.domain.SkinCareProduct;
-import ac.za.mycput.factory.CustomerFactory;
-import ac.za.mycput.factory.ReviewFactory;
-import org.junit.jupiter.api.*;
+import ac.za.mycput.domain.*;
+import ac.za.mycput.repository.*;
+import ac.za.mycput.service.AccountSession;
+import ac.za.mycput.service.CustomerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestMethodOrder(MethodOrderer.MethodName.class)
+@SpringBootTest(properties = "spring.jpa.show-sql=false")
+@AutoConfigureMockMvc
+@Transactional
 class ReviewControllerTest {
+    @Autowired MockMvc mvc;
+    @Autowired ObjectMapper json;
+    @Autowired EntityManager entities;
+    @Autowired CustomerService customers;
+    @Autowired ProductRepository products;
+    @Autowired ReviewRepository reviews;
+    @Autowired ReviewHelpfulVoteRepository votes;
+    @Autowired UserRepository users;
+    @Autowired AccountSession sessions;
+    Product product;
+    MockHttpSession customerSession;
+    MockHttpSession anotherCustomerSession;
+    MockHttpSession adminSession;
 
-    private static Customer customer;
-    private static SkinCareProduct product;
-    private static Review review;
+    MockHttpSession session(User user) {
+        var request = new MockHttpServletRequest();
+        sessions.start(request, user);
+        return (MockHttpSession) request.getSession();
+    }
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    Customer customer() {
+        return customers.register(new Customer.Builder().setFirstName("Review").setLastName("Tester")
+                .setEmail("review-" + UUID.randomUUID() + "@example.test").setPhoneNumber("0712345678")
+                .setPassword("ReviewTest123!").build());
+    }
 
-    private static final String BASE_URL = "http://localhost:8080/review";
-    private static final String CUSTOMER_URL = "http://localhost:8080/customer";
-    private static final String SKINCARE_URL = "http://localhost:8080/skincare";
+    @BeforeEach
+    void setup() {
+        product = products.saveAndFlush(new SkinCareProduct.Builder().setName("Review integration product")
+                .setPrice(new BigDecimal("25.00")).setStockQuantity(5).build());
+        customerSession = session(customer());
+        anotherCustomerSession = session(customer());
+        Admin admin = new Admin();
+        admin.setEmail("staff-" + UUID.randomUUID() + "@example.test");
+        admin.setRole(Role.ADMIN);
+        adminSession = session(users.saveAndFlush(admin));
+    }
 
-    @BeforeAll
-    static void setup() {
-        customer = CustomerFactory.createCustomer(
-                "Siphokazi",
-                "Malingatshoni",
-                "siphokazi.review.test@example.com",
-                "Password123",
-                "0821234567"
-        );
-
-        product = new SkinCareProduct.Builder()
-                .setName("Hydrating Facial Serum")
-                .setDescription("Lightweight serum with hyaluronic acid for deep hydration.")
-                .setBrand("RadiantSkin")
-                .setPrice(new BigDecimal("249.99"))
-                .setStockQuantity(50)
-                .setImageUrl("https://example.com/images/serum.jpg")
-                .setVolumeMl(30)
-                .setUsageInstructions("Apply 2-3 drops to clean skin morning and night.")
-                .build();
+    long submit() throws Exception {
+        var response = mvc.perform(post("/review/submit").session(customerSession)
+                .contentType("application/json").content(json.writeValueAsString(Map.of(
+                        "productId", product.getProductId(), "rating", 5, "comment", "Gentle daily care"))))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.customer").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist()).andReturn().getResponse();
+        return json.readTree(response.getContentAsString()).get("reviewId").asLong();
     }
 
     @Test
-    void a_create() {
-
-        ResponseEntity<Customer> customerResponse =
-                this.restTemplate.postForEntity(CUSTOMER_URL + "/create", customer, Customer.class);
-        assertNotNull(customerResponse.getBody());
-        customer = customerResponse.getBody();
-
-        ResponseEntity<SkinCareProduct> productResponse =
-                this.restTemplate.postForEntity(SKINCARE_URL + "/create", product, SkinCareProduct.class);
-        assertNotNull(productResponse.getBody());
-        product = productResponse.getBody();
-
-        review = ReviewFactory.createReview(
-                1L,
-                5,
-                "Loved this serum, noticeable glow within a week!",
-                LocalDate.now(),
-                customer,
-                product
-        );
-
-        String url = BASE_URL + "/create";
-
-        ResponseEntity<Review> postResponse =
-                this.restTemplate.postForEntity(url, review, Review.class);
-
-        assertNotNull(postResponse);
-        assertNotNull(postResponse.getBody());
-
-        review = postResponse.getBody();
-
-        System.out.println("Created: " + review);
+    void customerCanCreateReadEditAndDeleteTheirPersistedReview() throws Exception {
+        long id = submit();
+        entities.flush(); entities.clear();
+        assertEquals("Gentle daily care", reviews.findById(id).orElseThrow().getComment());
+        mvc.perform(get("/review/product/" + product.getProductId()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].reviewId").value(id));
+        mvc.perform(put("/review/my-reviews/" + id).session(customerSession)
+                        .contentType("application/json").content("{\"rating\":4,\"comment\":\"Updated daily care\"}"))
+                .andExpect(status().isOk());
+        entities.flush(); entities.clear();
+        assertEquals("Updated daily care", reviews.findById(id).orElseThrow().getComment());
+        mvc.perform(get("/review/my-reviews").session(customerSession))
+                .andExpect(jsonPath("$[0].comment").value("Updated daily care"));
+        mvc.perform(delete("/review/my-reviews/" + id).session(customerSession))
+                .andExpect(status().isNoContent());
+        entities.flush(); entities.clear();
+        assertFalse(reviews.existsById(id));
     }
 
     @Test
-    void b_read() {
-
-        String url = BASE_URL + "/read/" + review.getReviewId();
-
-        ResponseEntity<Review> response =
-                this.restTemplate.getForEntity(url, Review.class);
-
-        assertNotNull(response.getBody());
-
-        System.out.println("Read: " + response.getBody());
+    void customerCanDeleteAReviewThatHasHelpfulVotes() throws Exception {
+        long id = submit();
+        mvc.perform(post("/review/" + id + "/helpful").session(anotherCustomerSession))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/review/my-reviews/" + id).session(customerSession))
+                .andExpect(status().isNoContent());
+        entities.flush(); entities.clear();
+        assertFalse(reviews.existsById(id));
+        assertEquals(0, votes.countByReview_ReviewId(id));
     }
 
     @Test
-    void c_update() {
-
-        review.setRating(4);
-        review.setComment("Still great, updated after a month of use.");
-
-        String url = BASE_URL + "/update";
-
-        this.restTemplate.put(url, review);
-
-        ResponseEntity<Review> response =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + review.getReviewId(), Review.class);
-
-        assertNotNull(response.getBody());
-
-        System.out.println("Updated: " + response.getBody());
+    void anotherCustomerCannotEditOrDeleteTheReview() throws Exception {
+        long id = submit();
+        mvc.perform(put("/review/my-reviews/" + id).session(anotherCustomerSession)
+                        .contentType("application/json").content("{\"rating\":1,\"comment\":\"Changed by someone else\"}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(delete("/review/my-reviews/" + id).session(anotherCustomerSession))
+                .andExpect(status().isForbidden());
+        entities.flush(); entities.clear();
+        assertEquals("Gentle daily care", reviews.findById(id).orElseThrow().getComment());
     }
 
     @Test
-    void d_getAll() {
-
-        String url = BASE_URL + "/getAll";
-
-        ResponseEntity<Review[]> response =
-                this.restTemplate.getForEntity(url, Review[].class);
-
-        assertNotNull(response.getBody());
-
-        System.out.println("Get All:");
-
-        for (Review r : response.getBody()) {
-            System.out.println(r);
-        }
-    }
-
-    @Test
-    void e_delete() {
-
-        String url = BASE_URL + "/delete/" + review.getReviewId();
-
-        this.restTemplate.delete(url);
-
-        System.out.println("Deleted review with id: " + review.getReviewId());
+    void helpfulVotesAndAdminModerationPersistAndUpdatePublicResults() throws Exception {
+        long id = submit();
+        mvc.perform(post("/review/" + id + "/helpful").session(anotherCustomerSession))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.helpfulCount").value(1));
+        mvc.perform(post("/review/" + id + "/helpful").session(anotherCustomerSession))
+                .andExpect(status().isConflict());
+        entities.flush(); entities.clear();
+        assertEquals(1, reviews.findById(id).orElseThrow().getHelpfulCount());
+        mvc.perform(put("/review/admin/" + id + "/status").session(adminSession)
+                        .contentType("application/json").content("{\"status\":\"HIDDEN\"}"))
+                .andExpect(status().isOk());
+        entities.flush(); entities.clear();
+        assertEquals(ReviewStatus.HIDDEN, reviews.findById(id).orElseThrow().getStatus());
+        mvc.perform(get("/review/product/" + product.getProductId()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mvc.perform(put("/review/admin/" + id + "/status").session(adminSession)
+                        .contentType("application/json").content("{\"status\":\"APPROVED\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/review/product/" + product.getProductId()))
+                .andExpect(jsonPath("$.content[0].reviewId").value(id));
     }
 }

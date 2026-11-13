@@ -15,8 +15,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class PaymentServiceTest {
+    @org.junit.jupiter.api.BeforeAll
+    void prepareIdentity() { payment.setPaymentId(null); }
+
 
     @Autowired
     private PaymentService service;

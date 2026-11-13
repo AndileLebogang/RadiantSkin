@@ -1,0 +1,128 @@
+.my-orders-page {
+  max-width: 1100px;
+  margin-inline: auto;
+}
+.order-history-back {
+  min-height: 44px;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.order-history-list {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.order-history-count {
+  font-size: 14px;
+  color: var(--ink);
+}
+.order-history-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.order-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.order-history-header h2 {
+  font-family: var(--display-font);
+  font-size: 30px;
+  line-height: 1.2;
+}
+.order-history-header p {
+  margin-top: 8px;
+  font-size: 14px;
+}
+.order-history-header > span {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+.order-history-items {
+  margin: 0;
+  padding: 0 24px;
+  list-style: none;
+}
+.order-history-items li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding-block: 24px;
+}
+.order-history-items li + li {
+  border-top: 1px solid var(--line);
+}
+.order-history-product {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.order-history-quantity {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+}
+.order-history-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  border-top: 1px solid var(--line);
+}
+.order-history-total strong {
+  font-size: 20px;
+}
+.order-history-message {
+  display: grid;
+  justify-items: start;
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.order-history-empty {
+  justify-items: center;
+  text-align: center;
+  padding-block: 48px;
+}
+.order-history-empty > svg {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+.order-history-empty h2 {
+  font-family: var(--display-font);
+  font-size: 36px;
+  line-height: 1.2;
+}
+@media (max-width: 600px) {
+  .order-history-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .order-history-items {
+    padding-inline: 20px;
+  }
+  .order-history-items li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding-block: 20px;
+  }
+  .order-history-total {
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+  .order-history-message {
+    padding-inline: 20px;
+  }
+}

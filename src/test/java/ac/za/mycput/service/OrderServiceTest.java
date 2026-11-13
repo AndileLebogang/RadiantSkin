@@ -26,8 +26,17 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class OrderServiceTest {
+    @Autowired private ac.za.mycput.repository.CustomerRepository fixtureCustomers;
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        fixtureCustomers.saveAndFlush(customer);
+        order.setOrderId(null);
+    }
+
 
     @Autowired
     private OrderService service;
@@ -56,7 +65,6 @@ class OrderServiceTest {
         Order created = service.create(order);
 
         assertNotNull(created);
-        System.out.println("Created: " + created);
     }
 
     @Test
@@ -65,7 +73,6 @@ class OrderServiceTest {
         Order read = service.read(order.getOrderId());
 
         assertNotNull(read);
-        System.out.println("Read: " + read);
     }
 
     @Test
@@ -81,7 +88,6 @@ class OrderServiceTest {
         assertNotNull(updated);
         assertEquals(OrderStatus.PROCESSING, updated.getStatus());
 
-        System.out.println("Updated: " + updated);
     }
 
     @Test
@@ -90,7 +96,6 @@ class OrderServiceTest {
         boolean deleted = service.delete(order.getOrderId());
 
         assertTrue(deleted);
-        System.out.println("Deleted Successfully");
     }
 
     @Test
@@ -100,7 +105,6 @@ class OrderServiceTest {
 
         assertNotNull(orders);
 
-        orders.forEach(System.out::println);
     }
 
     @Test
@@ -110,7 +114,6 @@ class OrderServiceTest {
 
         assertNotNull(orders);
 
-        orders.forEach(System.out::println);
     }
 
     @Test
@@ -120,6 +123,5 @@ class OrderServiceTest {
 
         assertNotNull(orders);
 
-        orders.forEach(System.out::println);
     }
 }

@@ -38,6 +38,7 @@ export type CheckoutSubmission = {
   details: CheckoutDetails
   expectedTotal: number
   paymentMethod: PaymentMethod
+  localPayment?: boolean
 }
 export type Review = {
   reviewId: number
@@ -90,6 +91,7 @@ export type Order = {
   orderDate: string
   status: string
   totalAmount: number
+  payment?: { method: PaymentMethod; status: string; reference: string; local: boolean }
   orderItems: {
     orderItemId: number
     quantity: number
@@ -108,11 +110,20 @@ const text = (value: unknown) => (typeof value === 'string' ? value : '')
 function normalizeOrder(value: unknown): Order {
   const order = record(value)
   if (!positiveId(order.orderId)) throw new ApiError('The store did not return an order number.')
+  const payment = order.payment && typeof order.payment === 'object' && !Array.isArray(order.payment)
+    ? record(order.payment) : null
   return {
     orderId: order.orderId as number,
     orderDate: text(order.orderDate),
     status: text(order.status) || 'PENDING',
     totalAmount: amount(order.totalAmount),
+    ...(payment && ['CARD', 'EFT', 'PAYPAL'].includes(text(payment.method))
+      ? { payment: {
+          method: payment.method as PaymentMethod,
+          status: text(payment.status),
+          reference: text(payment.reference),
+          local: payment.local === true,
+        } } : {}),
     orderItems: Array.isArray(order.orderItems)
       ? order.orderItems.map((value) => {
           const item = record(value)
@@ -313,7 +324,9 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
         }
         throw new ApiError(
           response.status === 401
-            ? 'Your session has expired. Log in again to post your review.'
+            ? path === '/order/mine'
+              ? 'Log in again to see your orders.'
+              : 'Your session has expired. Log in again to post your review.'
             : response.status === 403 && path === '/review/submit'
               ? 'Only customer accounts can post reviews.'
               : response.status === 400 && path === '/review/submit'
@@ -344,6 +357,20 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
     }
   }
   return {
+    async bag(): Promise<BagItem[]> {
+      const body = await request('/storefront/cart')
+      if (!Array.isArray(body)) throw new ApiError('Your bag could not be loaded.')
+      return readBag(JSON.stringify(body))
+    },
+    async saveBag(items: BagItem[]): Promise<BagItem[]> {
+      const body = await request('/storefront/cart', undefined, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items),
+      })
+      if (!Array.isArray(body)) throw new ApiError('Your bag could not be saved.')
+      return readBag(JSON.stringify(body))
+    },
     async products(signal?: AbortSignal): Promise<Product[]> {
       const body = await request('/product/getAll', signal)
       if (!Array.isArray(body))
@@ -354,6 +381,12 @@ export function createApi(baseUrl: string, fetcher?: typeof fetch) {
       if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))
         throw new ApiError('Enter a valid order number.', 400)
       return normalizeOrder(await request(`/order/read/${encodeURIComponent(id)}`, signal))
+    },
+    async myOrders(signal?: AbortSignal): Promise<Order[]> {
+      const body = await request('/order/mine', signal)
+      if (!Array.isArray(body))
+        throw new ApiError('Your orders could not be loaded. Please try again.')
+      return body.map(normalizeOrder)
     },
     async checkout(input: CheckoutSubmission): Promise<Order> {
       // Send only order details. Card inputs never leave the payment form.

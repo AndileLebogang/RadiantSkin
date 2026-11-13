@@ -30,8 +30,22 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class OrderItemServiceTest {
+    @Autowired private ac.za.mycput.repository.CustomerRepository fixtureCustomers;
+    @Autowired private ac.za.mycput.repository.ProductRepository fixtureProducts;
+    @Autowired private ac.za.mycput.repository.OrderRepository fixtureOrders;
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        fixtureCustomers.saveAndFlush(customer);
+        fixtureProducts.saveAndFlush(product);
+        order.setOrderId(null);
+        fixtureOrders.saveAndFlush(order);
+        orderItem.setOrderItemId(null);
+    }
+
 
     @Autowired
     private OrderItemService service;
@@ -79,7 +93,6 @@ class OrderItemServiceTest {
         OrderItem created = service.create(orderItem);
 
         assertNotNull(created);
-        System.out.println("Created: " + created);
     }
 
     @Test
@@ -88,7 +101,6 @@ class OrderItemServiceTest {
         OrderItem read = service.read(orderItem.getOrderItemId());
 
         assertNotNull(read);
-        System.out.println("Read: " + read);
     }
 
     @Test
@@ -104,7 +116,6 @@ class OrderItemServiceTest {
         assertNotNull(updated);
         assertEquals(3, updated.getQuantity());
 
-        System.out.println("Updated: " + updated);
     }
 
     @Test
@@ -113,7 +124,6 @@ class OrderItemServiceTest {
         boolean deleted = service.delete(orderItem.getOrderItemId());
 
         assertTrue(deleted);
-        System.out.println("Deleted Successfully");
     }
 
     @Test
@@ -123,7 +133,6 @@ class OrderItemServiceTest {
 
         assertNotNull(items);
 
-        items.forEach(System.out::println);
     }
 
     @Test
@@ -133,7 +142,6 @@ class OrderItemServiceTest {
 
         assertNotNull(items);
 
-        items.forEach(System.out::println);
     }
 
     @Test
@@ -143,6 +151,5 @@ class OrderItemServiceTest {
 
         assertNotNull(items);
 
-        items.forEach(System.out::println);
     }
 }

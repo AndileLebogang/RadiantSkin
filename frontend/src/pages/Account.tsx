@@ -67,6 +67,11 @@ export default function AccountPage() {
           )}
         </dl>
         <div className="checkout-success-actions">
+          {user.role === 'CUSTOMER' && (
+            <Link className="button" to="/my-orders">
+              My orders
+            </Link>
+          )}
           <Link className="button" to="/bag">
             View your bag
           </Link>
