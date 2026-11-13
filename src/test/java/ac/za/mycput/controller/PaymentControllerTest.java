@@ -24,7 +24,7 @@ class PaymentControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/payment";
+    private static final String BASE_URL = "/payment";
 
     @BeforeAll
     static void setup() {

@@ -108,7 +108,7 @@ class AccountLoginTest {
         assertEquals(customer.getUserId(), saved.getCustomer().getUserId());
         assertEquals(product.getProductId(), saved.getProduct().getProductId());
         mvc.perform(get("/review/product/" + product.getProductId()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].reviewId").value(id));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].reviewId").value(id));
         mvc.perform(post("/auth/logout").session(session)).andExpect(status().isNoContent());
         mvc.perform(post("/review/submit").contentType("application/json")
                         .content(json.writeValueAsString(submission)))

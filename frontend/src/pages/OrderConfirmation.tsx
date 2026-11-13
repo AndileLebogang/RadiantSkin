@@ -5,7 +5,10 @@ function OrderConfirmation() {
   const navigate = useNavigate();
 
   // The order was passed to us from CustomerDashboard when it navigated here
-  const order = location.state;
+  const order = location.state as {
+    orderId: number; status: string; totalAmount: number;
+    orderItems: {orderItemId: number; product: {name: string}; quantity: number; unitPrice: number; subtotal: number}[];
+  } | null;
 
   // If someone lands on this page directly without an order, send them back
   if (!order) {
@@ -39,7 +42,7 @@ function OrderConfirmation() {
               </tr>
             </thead>
             <tbody>
-              {order.orderItems.map(function (item: any) {
+              {order.orderItems.map(function (item) {
                 return (
                   <tr key={item.orderItemId}>
                     <td>{item.product.name}</td>

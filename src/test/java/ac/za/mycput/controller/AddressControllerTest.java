@@ -27,8 +27,8 @@ class AddressControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/address";
-    private static final String CUSTOMER_URL = "http://localhost:8080/customer";
+    private static final String BASE_URL = "/address";
+    private static final String CUSTOMER_URL = "/customer";
 
     @BeforeAll
     static void setup() {
@@ -45,7 +45,7 @@ class AddressControllerTest {
     void a_create() {
 
         ResponseEntity<Customer> customerResponse =
-                this.restTemplate.postForEntity(CUSTOMER_URL + "/create", customer, Customer.class);
+                this.restTemplate.postForEntity(CUSTOMER_URL + "/create", java.util.Map.of("firstName", customer.getFirstName(), "lastName", customer.getLastName(), "email", "fixture-" + java.util.UUID.randomUUID() + "@example.test", "password", "Password123", "phoneNumber", customer.getPhoneNumber()), Customer.class);
 
         assertNotNull(customerResponse.getBody());
         customer = customerResponse.getBody();

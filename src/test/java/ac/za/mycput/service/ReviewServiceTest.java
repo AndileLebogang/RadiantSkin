@@ -19,8 +19,20 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class ReviewServiceTest {
+    @Autowired private ac.za.mycput.repository.CustomerRepository fixtureCustomers;
+    @Autowired private ac.za.mycput.repository.ProductRepository fixtureProducts;
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        fixtureCustomers.saveAndFlush(customer);
+        product.setProductId(null);
+        fixtureProducts.saveAndFlush(product);
+        review.setReviewId(null);
+    }
+
 
     @Autowired
     private ReviewService service;
@@ -60,7 +72,6 @@ class ReviewServiceTest {
         Review created = service.create(review);
 
         assertNotNull(created);
-        System.out.println("Created: " + created);
     }
 
     @Test
@@ -69,7 +80,6 @@ class ReviewServiceTest {
         Review read = service.read(review.getReviewId());
 
         assertNotNull(read);
-        System.out.println("Read: " + read);
     }
 
     @Test
@@ -85,7 +95,6 @@ class ReviewServiceTest {
         assertNotNull(updated);
         assertEquals("Very good product!", updated.getComment());
 
-        System.out.println("Updated: " + updated);
     }
 
     @Test
@@ -94,7 +103,6 @@ class ReviewServiceTest {
         boolean deleted = service.delete(review.getReviewId());
 
         assertTrue(deleted);
-        System.out.println("Deleted Successfully");
     }
 
     @Test
@@ -104,6 +112,5 @@ class ReviewServiceTest {
 
         assertNotNull(reviews);
 
-        reviews.forEach(System.out::println);
     }
 }

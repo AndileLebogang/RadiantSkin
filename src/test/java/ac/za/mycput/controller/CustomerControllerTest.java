@@ -19,7 +19,7 @@ class CustomerControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/customer";
+    private static final String BASE_URL = "/customer";
 
     @BeforeAll
     static void setup() {

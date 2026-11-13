@@ -14,8 +14,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class BodyCareProductServiceTest {
+
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        product.setProductId(null);
+    }
+
 
     @Autowired
     private BodyCareProductService service;
@@ -40,7 +48,6 @@ class BodyCareProductServiceTest {
 
         assertNotNull(created);
 
-        System.out.println(created);
     }
 
     @Test
@@ -50,7 +57,6 @@ class BodyCareProductServiceTest {
 
         assertNotNull(read);
 
-        System.out.println(read);
     }
 
     @Test
@@ -65,7 +71,6 @@ class BodyCareProductServiceTest {
 
         assertNotNull(updated);
 
-        System.out.println(updated);
     }
 
     @Test
@@ -75,7 +80,6 @@ class BodyCareProductServiceTest {
 
         assertTrue(deleted);
 
-        System.out.println("Deleted Successfully");
     }
 
     @Test
@@ -85,6 +89,5 @@ class BodyCareProductServiceTest {
 
         assertNotNull(products);
 
-        products.forEach(System.out::println);
     }
 }

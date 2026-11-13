@@ -44,7 +44,7 @@ class AdminFactoryTest {
     void createAdminWithEmptyFirstName() {
 
         Admin admin = AdminFactory.createAdmin(
-                "Katlego",
+                "",
                 "Khumalo",
                 "ayanda.khumalo@gmail.com",
                 "Pass123",
@@ -59,7 +59,7 @@ class AdminFactoryTest {
 
         Admin admin = AdminFactory.createAdmin(
                 "Boitumelo",
-                "Tau",
+                "",
                 "boitumelo.modise@gmail.com",
                 "Pass123",
                 "EMP004"

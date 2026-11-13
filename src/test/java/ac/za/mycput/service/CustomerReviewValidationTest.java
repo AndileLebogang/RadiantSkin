@@ -25,7 +25,7 @@ class CustomerReviewValidationTest {
         when(products.findById(8L)).thenReturn(Optional.of(mock(Product.class)));
         when(reviews.save(any(Review.class))).thenAnswer(call -> call.getArgument(0));
 
-        Review saved = new ReviewService(reviews, customers, products)
+        Review saved = new ReviewService(reviews, customers, products, mock(ac.za.mycput.repository.ReviewHelpfulVoteRepository.class))
                 .addReview(3L, 8L, 4, "  Nice on my skin  ");
 
         assertEquals("Nice on my skin", saved.getComment());
@@ -40,7 +40,7 @@ class CustomerReviewValidationTest {
         ProductRepository products = mock(ProductRepository.class);
         when(customers.findById(3L)).thenReturn(Optional.of(mock(Customer.class)));
         when(products.findById(8L)).thenReturn(Optional.of(mock(Product.class)));
-        ReviewService service = new ReviewService(reviews, customers, products);
+        ReviewService service = new ReviewService(reviews, customers, products, mock(ac.za.mycput.repository.ReviewHelpfulVoteRepository.class));
 
         assertThrows(IllegalArgumentException.class, () -> service.addReview(3L, 8L, 5, " "));
         assertThrows(IllegalArgumentException.class, () -> service.addReview(3L, 8L, 5, "x".repeat(241)));

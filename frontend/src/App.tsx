@@ -17,6 +17,7 @@ import RegisterPage from './pages/Register'
 import LoginPage from './pages/Login'
 import AccountPage from './pages/Account'
 import MyReviewsPage from './pages/MyReviews'
+import MyOrdersPage from './pages/MyOrders'
 import AboutPage from './pages/About'
 import ContactPage from './pages/Contact'
 import AdminPage from './pages/Admin'
@@ -31,7 +32,7 @@ import {
 } from './pages'
 
 function Shell() {
-  const { count, notice } = useStore()
+  const { count, notice, bagError, retryBag, bagBusy } = useStore()
   const { user, signOut } = useAuth()
   const [menu, setMenu] = useState(false)
   const navigate = useNavigate()
@@ -109,8 +110,8 @@ function Shell() {
                 Log out
               </button>
             )}
-            <Link className="track-link" to="/orders">
-              Track order
+            <Link className="track-link" to={user?.role === 'CUSTOMER' ? '/my-orders' : '/orders'}>
+              {user?.role === 'CUSTOMER' ? 'My orders' : 'Track order'}
             </Link>
             <Link className="icon-button" to="/shop#search" aria-label="Search products">
               <FiSearch />
@@ -151,7 +152,12 @@ function Shell() {
               )}
               {user ? (
                 <>
-                  {user.role === 'CUSTOMER' && <Link to="/my-reviews">My reviews</Link>}
+                  {user.role === 'CUSTOMER' && (
+                    <>
+                      <Link to="/my-orders">My orders</Link>
+                      <Link to="/my-reviews">My reviews</Link>
+                    </>
+                  )}
                   <Link to="/account">My account</Link>
                 </>
               ) : (
@@ -179,6 +185,14 @@ function Shell() {
         )}
       </div>
       <main id="main" tabIndex={-1}>
+        {bagError && (
+          <div className="bag-save-notice" role="alert">
+            <p>{bagError}</p>
+            <button className="text-link" onClick={retryBag} disabled={bagBusy}>
+              Try again
+            </button>
+          </div>
+        )}
         <div className="route-content" key={location.pathname}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -192,6 +206,7 @@ function Shell() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/my-reviews" element={<MyReviewsPage />} />
+            <Route path="/my-orders" element={<MyOrdersPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/admin" element={<AdminPage />} />
@@ -227,7 +242,12 @@ function Shell() {
             <Link to="/orders">Track your order</Link>
             {user ? (
               <>
-                {user.role === 'CUSTOMER' && <Link to="/my-reviews">My reviews</Link>}
+                {user.role === 'CUSTOMER' && (
+                  <>
+                    <Link to="/my-orders">My orders</Link>
+                    <Link to="/my-reviews">My reviews</Link>
+                  </>
+                )}
                 <Link to="/account">Your account</Link>
               </>
             ) : (

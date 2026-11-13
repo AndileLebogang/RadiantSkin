@@ -49,7 +49,7 @@ interface OrderData {
   orderDate: string;
   status: string;
   totalAmount: number;
-  orderItems: any[];
+  orderItems: unknown[];
 }
 
 const DELIVERY_FEE = 60;
@@ -58,7 +58,12 @@ function CustomerDashboard() {
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<ViewId>("dashboard");
 
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer] = useState<Customer | null>(() => {
+    try {
+      const stored = localStorage.getItem("customer");
+      return stored ? JSON.parse(stored) as Customer : null;
+    } catch { return null; }
+  });
   const [products, setProducts] = useState<ProductData[]>([]);
   const [cartItems, setCartItems] = useState<CartItemData[]>([]);
   const [orders, setOrders] = useState<OrderData[]>([]);
@@ -79,20 +84,9 @@ function CustomerDashboard() {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewMessage, setReviewMessage] = useState("");
 
-  // Load the logged in customer, or send them to login if nobody is logged in
-  useEffect(
-    function () {
-      const stored = localStorage.getItem("customer");
-
-      if (!stored) {
-        navigate("/login");
-        return;
-      }
-
-      setCustomer(JSON.parse(stored));
-    },
-    [navigate],
-  );
+  useEffect(() => {
+    if (!customer) navigate("/login");
+  }, [customer, navigate]);
 
   // Get all products from the three categories, combined into one list
   function loadProducts() {

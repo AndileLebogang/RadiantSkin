@@ -10,6 +10,7 @@ import ac.za.mycput.domain.ReviewStatus;
 import ac.za.mycput.repository.CustomerRepository;
 import ac.za.mycput.repository.ProductRepository;
 import ac.za.mycput.repository.ReviewRepository;
+import ac.za.mycput.repository.ReviewHelpfulVoteRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,16 +31,19 @@ public class ReviewService implements IReviewService {
     private final ReviewRepository repository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final ReviewHelpfulVoteRepository helpfulVotes;
 
     @Autowired
     public ReviewService(
             ReviewRepository repository,
             CustomerRepository customerRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            ReviewHelpfulVoteRepository helpfulVotes) {
 
         this.repository = repository;
         this.customerRepository = customerRepository;
         this.productRepository = productRepository;
+        this.helpfulVotes = helpfulVotes;
     }
 
     // --------------------------------------------------
@@ -94,6 +98,7 @@ public class ReviewService implements IReviewService {
             return false;
         }
 
+        helpfulVotes.deleteByReview_ReviewId(id);
         repository.deleteById(id);
         return true;
     }
@@ -337,6 +342,7 @@ public boolean deleteCustomerReview(Long reviewId, Long customerId) {
                 "You cannot delete another customer's review");
     }
 
+    helpfulVotes.deleteByReview_ReviewId(reviewId);
     repository.delete(review);
     return true;
 }

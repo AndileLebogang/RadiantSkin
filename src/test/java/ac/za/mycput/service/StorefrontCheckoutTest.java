@@ -112,7 +112,7 @@ class StorefrontCheckoutTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         long id = json.readTree(response).get("orderId").asLong();
         var saved = payments.findAll().stream()
-                .filter(payment -> payment.getOrder().getOrderId().equals(id)).toList();
+                .filter(payment -> payment.getOrder() != null && payment.getOrder().getOrderId().equals(id)).toList();
         assertEquals(1, saved.size());
         assertEquals(method, saved.getFirst().getPaymentMethod());
         assertEquals(PaymentStatus.PENDING, saved.getFirst().getPaymentStatus());
@@ -121,7 +121,7 @@ class StorefrontCheckoutTest {
         assertEquals(id, checkout.place(request).orderId());
         assertEquals(2, product.getStockQuantity());
         assertEquals(1, payments.findAll().stream()
-                .filter(payment -> payment.getOrder().getOrderId().equals(id)).count());
+                .filter(payment -> payment.getOrder() != null && payment.getOrder().getOrderId().equals(id)).count());
     }
 
     @Test
@@ -135,6 +135,36 @@ class StorefrontCheckoutTest {
         assertEquals(3, product.getStockQuantity());
     }
 
+    @ParameterizedTest
+    @EnumSource(PaymentMethod.class)
+    void recordsLocalPaymentsAndReturnsTheSameReceiptOnRetry(PaymentMethod method) throws Exception {
+        UUID requestId = UUID.randomUUID();
+        var request = new StorefrontCheckoutService.Request(requestId,
+                List.of(new StorefrontCheckoutService.Line(product.getProductId(), 1)),
+                details, new BigDecimal("24.95"), method, true);
+        String reference = "LOCAL-RS-" + requestId.toString().replace("-", "").substring(0, 12).toUpperCase();
+        var response = mvc.perform(post("/checkout/place").contentType("application/json")
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.payment.method").value(method.name()))
+                .andExpect(jsonPath("$.payment.status").value("SUCCESSFUL"))
+                .andExpect(jsonPath("$.payment.reference").value(reference))
+                .andExpect(jsonPath("$.payment.local").value(true))
+                .andExpect(jsonPath("$.payment.cardNumber").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(response).get("orderId").asLong();
+        var repeated = checkout.place(request);
+        assertEquals(id, repeated.orderId());
+        assertEquals(reference, repeated.payment().reference());
+        assertEquals("SUCCESSFUL", repeated.payment().status());
+        assertEquals(2, product.getStockQuantity());
+        assertEquals(1, payments.findAll().stream()
+                .filter(payment -> payment.getOrder() != null && payment.getOrder().getOrderId().equals(id)).count());
+        mvc.perform(get("/order/read/" + id)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.payment.reference").value(reference))
+                .andExpect(jsonPath("$.payment.local").value(true));
+    }
+
     @Test
     void supportsOlderCheckoutRequestsWithoutAPaymentMethod() throws Exception {
         var payload = json.valueToTree(request(1, "24.95"));
@@ -144,7 +174,7 @@ class StorefrontCheckoutTest {
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         long id = json.readTree(response).get("orderId").asLong();
         var saved = payments.findAll().stream()
-                .filter(payment -> payment.getOrder().getOrderId().equals(id)).findFirst().orElseThrow();
+                .filter(payment -> payment.getOrder() != null && payment.getOrder().getOrderId().equals(id)).findFirst().orElseThrow();
         assertEquals(PaymentMethod.CARD, saved.getPaymentMethod());
         assertEquals(PaymentStatus.PENDING, saved.getPaymentStatus());
     }

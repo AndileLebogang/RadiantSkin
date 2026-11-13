@@ -38,9 +38,13 @@
 }
 .admin-form {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1.25rem;
   margin: 1.5rem 0 2.5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
 }
 .admin-form h2,
 .admin-form .wide,
@@ -50,17 +54,54 @@
 .admin-form label {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  min-width: 0;
+  gap: 0.5rem;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 .admin-form input,
 .admin-form select,
 .admin-form textarea {
   font: inherit;
-  padding: 0.5rem;
+  font-size: 1rem;
+  font-weight: 400;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.75rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  caret-color: var(--ink);
+}
+.admin-form textarea {
+  min-height: 128px;
+  resize: vertical;
+}
+.admin-form input::placeholder,
+.admin-form textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.admin-form :is(input, select, textarea):hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.admin-form :is(input, select, textarea):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.admin-form :is(input, select, textarea):disabled {
+  background: var(--surface);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 1;
 }
 .admin-form-actions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .admin-review-heading {

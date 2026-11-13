@@ -31,10 +31,10 @@ class OrderItemControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/orderitem";
-    private static final String CUSTOMER_URL = "http://localhost:8080/customer";
-    private static final String ORDER_URL = "http://localhost:8080/order";
-    private static final String SKINCARE_URL = "http://localhost:8080/skincare";
+    private static final String BASE_URL = "/orderitem";
+    private static final String CUSTOMER_URL = "/customer";
+    private static final String ORDER_URL = "/order";
+    private static final String SKINCARE_URL = "/skincare";
 
     @BeforeAll
     static void setup() {
@@ -62,7 +62,7 @@ class OrderItemControllerTest {
     void a_create() {
 
         ResponseEntity<Customer> customerResponse =
-                this.restTemplate.postForEntity(CUSTOMER_URL + "/create", customer, Customer.class);
+                this.restTemplate.postForEntity(CUSTOMER_URL + "/create", java.util.Map.of("firstName", customer.getFirstName(), "lastName", customer.getLastName(), "email", "fixture-" + java.util.UUID.randomUUID() + "@example.test", "password", "Password123", "phoneNumber", customer.getPhoneNumber()), Customer.class);
         assertNotNull(customerResponse.getBody());
         customer = customerResponse.getBody();
 
@@ -81,6 +81,7 @@ class OrderItemControllerTest {
                 null
         );
 
+        newOrder.setOrderId(null);
         ResponseEntity<Order> orderResponse =
                 this.restTemplate.postForEntity(ORDER_URL + "/create", newOrder, Order.class);
         assertNotNull(orderResponse.getBody());
@@ -94,6 +95,7 @@ class OrderItemControllerTest {
                 product
         );
 
+        orderItem.setOrderItemId(null);
         String url = BASE_URL + "/create";
 
         ResponseEntity<OrderItem> postResponse =

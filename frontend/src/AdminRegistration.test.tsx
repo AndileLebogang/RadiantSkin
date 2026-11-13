@@ -1,3 +1,4 @@
+import { withCartServer } from './test/cartServer'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -24,7 +25,7 @@ beforeEach(() => {
     if (path.endsWith('/auth/login')) return new Response(JSON.stringify(admin))
     return new Response('[]')
   })
-  vi.stubGlobal('fetch', fetcher)
+  vi.stubGlobal('fetch', withCartServer(fetcher))
 })
 afterEach(() => {
   cleanup()

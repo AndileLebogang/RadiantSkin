@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -24,7 +24,7 @@ function Cart() {
   const [items, setItems] = useState<CartItemData[]>([]);
 
   // This function goes to the backend and gets the customer's cart
-  function loadCart() {
+  const loadCart = useCallback(() => {
     // Get the logged in customer from local storage
     const customerText = localStorage.getItem("customer");
 
@@ -48,12 +48,12 @@ function Cart() {
           setItems([]);
         }
       });
-  }
+  }, [navigate]);
 
   // Run loadCart() once, when the page first opens
   useEffect(function () {
     loadCart();
-  }, []);
+  }, [loadCart]);
 
   // Increase the quantity of one item by 1
   function increaseQuantity(item: CartItemData) {

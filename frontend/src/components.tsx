@@ -44,7 +44,7 @@ export function ProductImage({ product }: { product: Product }) {
   )
 }
 export function ProductCard({ product }: { product: Product }) {
-  const { bag, setQuantity } = useStore()
+  const { bag, setQuantity, bagBusy } = useStore()
   const quantity = bag.find((item) => item.productId === product.productId)?.quantity || 0
   const unavailable = product.stockQuantity <= quantity || quantity >= 99
   return (
@@ -76,7 +76,7 @@ export function ProductCard({ product }: { product: Product }) {
           <button
             className="add-button"
             aria-label={`Add ${product.name} to bag`}
-            disabled={unavailable}
+            disabled={unavailable || bagBusy}
             onClick={() => setQuantity(product, quantity + 1)}
           >
             {unavailable ? (quantity ? 'In your bag' : 'Unavailable') : 'Add to bag'}
@@ -138,17 +138,19 @@ export function Quantity({
   max,
   name,
   onChange,
+  disabled = false,
 }: {
   quantity: number
   max: number
   name: string
   onChange: (quantity: number) => void
+  disabled?: boolean
 }) {
   return (
     <div className="quantity">
       <button
         aria-label={`Decrease quantity of ${name}`}
-        disabled={quantity <= 1}
+        disabled={disabled || quantity <= 1}
         onClick={() => onChange(quantity - 1)}
       >
         <FiMinus />
@@ -156,7 +158,7 @@ export function Quantity({
       <span aria-label={`Quantity ${quantity}`}>{quantity}</span>
       <button
         aria-label={`Increase quantity of ${name}`}
-        disabled={quantity >= Math.min(max, 99)}
+        disabled={disabled || quantity >= Math.min(max, 99)}
         onClick={() => onChange(quantity + 1)}
       >
         <FiPlus />

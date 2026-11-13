@@ -36,6 +36,11 @@ public class Order {
     @Embedded
     private CheckoutDetails checkoutDetails;
 
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "delivery_address_id")
+    private Address deliveryAddress;
+
     @ManyToOne
     private Customer customer; // Link with the customer class when available
 
@@ -56,6 +61,7 @@ public class Order {
         this.totalAmount = builder.totalAmount;
         this.checkoutReference = builder.checkoutReference;
         this.checkoutDetails = builder.checkoutDetails;
+        this.deliveryAddress = builder.deliveryAddress;
         this.customer = builder.customer;
         this.orderItems = builder.orderItems;
         this.payments = builder.payments;
@@ -109,6 +115,10 @@ public class Order {
         return customer;
     }
 
+    public Address getDeliveryAddress() { return deliveryAddress; }
+
+    public void setDeliveryAddress(Address deliveryAddress) { this.deliveryAddress = deliveryAddress; }
+
     public void setCustomer(Customer customer) {
         this.customer = customer;
     }
@@ -149,6 +159,7 @@ public class Order {
         private BigDecimal totalAmount;
         private String checkoutReference;
         private CheckoutDetails checkoutDetails;
+        private Address deliveryAddress;
         private Customer customer;
         private List<OrderItem> orderItems = new ArrayList<>();
         private List<Payment> payments = new ArrayList<>();
@@ -178,6 +189,11 @@ public class Order {
             return this;
         }
 
+        public Builder setDeliveryAddress(Address deliveryAddress) {
+            this.deliveryAddress = deliveryAddress;
+            return this;
+        }
+
         public Builder setOrderItems(List<OrderItem> orderItems) {
             this.orderItems = orderItems;
             return this;
@@ -195,6 +211,7 @@ public class Order {
             this.totalAmount = order.totalAmount;
             this.checkoutReference = order.checkoutReference;
             this.checkoutDetails = order.checkoutDetails;
+            this.deliveryAddress = order.deliveryAddress;
             this.customer = order.customer;
             this.orderItems = order.orderItems;
             this.payments = order.payments;

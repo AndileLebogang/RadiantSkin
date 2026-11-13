@@ -10,6 +10,34 @@ const raw = {
   imageUrl: 'https://example.com/product.png',
 }
 describe('Existing backend contracts', () => {
+  it('restores local payment receipts without exposing payment inputs', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          orderId: 17,
+          status: 'PROCESSING',
+          totalAmount: 245,
+          orderItems: [],
+          payment: {
+            method: 'EFT',
+            status: 'SUCCESSFUL',
+            reference: 'LOCAL-RS-123456789ABC',
+            local: true,
+            cardNumber: '4111111111111111',
+            paypalEmail: 'private@example.test',
+          },
+        }),
+      ),
+    )
+    const order = await createApi('/api', fetcher).order('17')
+    expect(order.payment).toEqual({
+      method: 'EFT',
+      status: 'SUCCESSFUL',
+      reference: 'LOCAL-RS-123456789ABC',
+      local: true,
+    })
+    expect(JSON.stringify(order)).not.toMatch(/cardNumber|4111111111111111|private@example.test/)
+  })
   it('normalizes decimal prices and recognizes subtype fields even when null', () => {
     expect(normalizeProduct(raw)).toMatchObject({
       productId: 7,

@@ -18,8 +18,17 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class CartServiceTest {
+    @Autowired private ac.za.mycput.repository.CustomerRepository fixtureCustomers;
+
+    @org.junit.jupiter.api.BeforeAll
+    void preparePersistentFixtures() {
+        fixtureCustomers.saveAndFlush(customer);
+        cart.setCartId(null);
+    }
+
 
     @Autowired
     private CartService service;
@@ -46,7 +55,6 @@ class CartServiceTest {
 
         assertNotNull(created);
 
-        System.out.println(created);
     }
 
     @Test
@@ -56,7 +64,6 @@ class CartServiceTest {
 
         assertNotNull(read);
 
-        System.out.println(read);
     }
 
     @Test
@@ -71,7 +78,6 @@ class CartServiceTest {
 
         assertNotNull(updated);
 
-        System.out.println(updated);
     }
 
     @Test
@@ -81,7 +87,6 @@ class CartServiceTest {
 
         assertTrue(deleted);
 
-        System.out.println("Deleted");
     }
 
     @Test
@@ -89,6 +94,5 @@ class CartServiceTest {
 
         assertNotNull(service.getAll());
 
-        service.getAll().forEach(System.out::println);
     }
 }

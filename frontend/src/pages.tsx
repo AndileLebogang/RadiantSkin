@@ -5,11 +5,15 @@ import {
   FiArrowLeft,
   FiArrowRight,
   FiCheck,
+  FiDroplet,
+  FiGrid,
+  FiHeart,
   FiInfo,
   FiPackage,
   FiSearch,
   FiSliders,
   FiTrash2,
+  FiWind,
 } from 'react-icons/fi'
 import {
   CatalogueStatus,
@@ -27,6 +31,13 @@ import { categories, createApi, money, paymentMethodLabels } from './lib/store'
 import type { CheckoutDetails, Order, PaymentMethod, Product } from './lib/store'
 
 export { HomePage } from './HomePage'
+
+const shopCategories = [
+  { id: 'all', label: 'Shop all', detail: 'Everyday essentials', icon: FiGrid },
+  { id: 'skin', label: 'Skin care', detail: 'Care for your face', icon: FiDroplet },
+  { id: 'body', label: 'Body care', detail: 'From head to toe', icon: FiHeart },
+  { id: 'hair', label: 'Hair care', detail: 'Your daily hair ritual', icon: FiWind },
+]
 
 export function ShopPage() {
   const { products } = useStore()
@@ -73,32 +84,43 @@ export function ShopPage() {
       </div>
       <div className="shop-layout">
         <aside className="shop-toolbar" aria-label="Find your essentials">
-          <span className="eyebrow">Browse the collection</span>
+          <div className="category-heading">
+            <span className="eyebrow">Your everyday care</span>
+            <h2>Shop by category</h2>
+          </div>
           <div className="category-tabs" role="group" aria-label="Product category">
-            {[{ id: 'all', label: 'Shop all' }, ...categories].map((item) => (
+            {shopCategories.map(({ id, label, detail, icon: Icon }) => (
               <button
-                key={item.id}
-                aria-pressed={category === item.id}
-                className={category === item.id ? 'selected' : ''}
-                onClick={() => update('category', item.id === 'all' ? '' : item.id)}
+                key={id}
+                aria-label={label}
+                aria-pressed={category === id}
+                className={category === id ? 'selected' : ''}
+                onClick={() => update('category', id === 'all' ? '' : id)}
               >
-                {item.label}
+                <span className="category-icon" aria-hidden="true">
+                  <Icon />
+                </span>
+                <span className="category-copy">
+                  <span>{label}</span>
+                  <small>{detail}</small>
+                </span>
+                <FiCheck className="category-selected-mark" aria-hidden="true" />
               </button>
             ))}
           </div>
-          <div className="search-field">
-            <FiSearch aria-hidden="true" />
-            <label className="sr-only" htmlFor="search">
-              Search products
-            </label>
-            <input
-              id="search"
-              ref={searchRef}
-              type="search"
-              placeholder="Search your essentials…"
-              value={query}
-              onChange={(event) => update('q', event.target.value)}
-            />
+          <div className="category-search">
+            <label htmlFor="search">Search products</label>
+            <div className="search-field">
+              <FiSearch aria-hidden="true" />
+              <input
+                id="search"
+                ref={searchRef}
+                type="search"
+                placeholder="Name, brand or product…"
+                value={query}
+                onChange={(event) => update('q', event.target.value)}
+              />
+            </div>
           </div>
         </aside>
         <div className="shop-results">
@@ -176,7 +198,7 @@ export function ProductPage() {
   )
 }
 function ProductDetail({ product }: { product: Product }) {
-  const { bag, setQuantity, products } = useStore()
+  const { bag, setQuantity, products, bagBusy } = useStore()
   const [quantity, setSelectedQuantity] = useState(1)
   const inBag = bag.find((item) => item.productId === product.productId)?.quantity || 0
   const remaining = Math.min(99 - inBag, product.stockQuantity - inBag)
@@ -220,7 +242,7 @@ function ProductDetail({ product }: { product: Product }) {
             />
             <button
               className="button"
-              disabled={remaining <= 0}
+              disabled={remaining <= 0 || bagBusy}
               onClick={() => setQuantity(product, inBag + Math.min(quantity, remaining))}
             >
               {remaining <= 0 ? 'Unavailable' : 'Add to bag'}
@@ -265,7 +287,7 @@ function ProductDetail({ product }: { product: Product }) {
 }
 
 export function BagPage() {
-  const { bag, products, setQuantity, remove, reload } = useStore()
+  const { bag, products, setQuantity, remove, reload, bagBusy } = useStore()
   const lines = bag.map((item) => ({
     ...item,
     product: products.find((product) => product.productId === item.productId),
@@ -282,7 +304,9 @@ export function BagPage() {
         <span className="eyebrow">Your everyday essentials</span>
         <h1>Your bag.</h1>
       </div>
-      {!bag.length ? (
+      {bagBusy && !bag.length ? (
+        <p role="status">Loading your bag…</p>
+      ) : !bag.length ? (
         <EmptyState title="Your bag is waiting for a little care" action={<ShopLink />}>
           Explore the collection and make room for your next essential.
         </EmptyState>
@@ -324,11 +348,13 @@ export function BagPage() {
                           quantity={quantity}
                           max={product.stockQuantity}
                           name={product.name}
+                          disabled={bagBusy}
                           onChange={(value) => setQuantity(product, value)}
                         />
                       )}
                       <button
                         className="remove-button"
+                        disabled={bagBusy}
                         onClick={() => remove(productId)}
                         aria-label={`Remove ${product?.name || 'unavailable product'} from bag`}
                       >
@@ -361,7 +387,9 @@ export function BagPage() {
                 <span>Total</span>
                 <span>{money(total)}</span>
               </div>
-              {invalid ? (
+              {bagBusy ? (
+                <p role="status">Saving your bag…</p>
+              ) : invalid ? (
                 <p className="inline-error" role="alert">
                   Update the unavailable items in your bag to continue.
                 </p>
@@ -395,12 +423,12 @@ const provinces = [
 ]
 export function CheckoutPage() {
   const { user, loading: accountLoading } = useAuth()
-  const { bag, products, clearBag, reload } = useStore()
+  const { bag, products, clearBag, reload, bagBusy } = useStore()
   const [draft, setDraft] = useState<CheckoutDetails | null>(null)
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null)
   const [completedPayment, setCompletedPayment] = useState<PaymentMethod>('CARD')
   const [placing, setPlacing] = useState(false)
-  const requestId = useRef(crypto.randomUUID())
+  const [requestId, setRequestId] = useState(() => crypto.randomUUID())
   const formRef = useRef<HTMLFormElement>(null)
   const reviewRef = useRef<HTMLDivElement>(null)
   const invalid = bag.some((item) => {
@@ -425,20 +453,21 @@ export function CheckoutPage() {
         String(value).trim(),
       ]),
     )
-    requestId.current = crypto.randomUUID()
+    setRequestId(crypto.randomUUID())
     setDraft(details as CheckoutDetails)
   }
   async function placeOrder(paymentMethod: PaymentMethod) {
-    if (!draft || !bag.length || invalid)
+    if (!draft || !bag.length || invalid || bagBusy)
       throw new Error('Review your bag before placing your order.')
     const api = createApi(import.meta.env.VITE_API_BASE_URL || '/api')
     // A retry uses the same request ID, even if the first response was lost.
     const order = await api.checkout({
-      requestId: requestId.current,
+      requestId,
       items: bag.map(({ productId, quantity }) => ({ productId, quantity })),
       details: draft,
       expectedTotal: total,
       paymentMethod,
+      localPayment: true,
     })
     setCompletedPayment(paymentMethod)
     setCompletedOrder(order)
@@ -480,11 +509,28 @@ export function CheckoutPage() {
           <p>
             Payment method: <strong>{paymentMethodLabels[completedPayment]}</strong>
           </p>
-          <p>Awaiting payment. No payment has been taken.</p>
+          <p>
+            Payment status:{' '}
+            <strong>
+              {completedOrder.payment?.status === 'SUCCESSFUL'
+                ? 'Complete'
+                : 'Awaiting confirmation'}
+            </strong>
+          </p>
+          {completedOrder.payment && (
+            <p>
+              Payment reference: <strong>{completedOrder.payment.reference}</strong>
+            </p>
+          )}
           <p>
             Total: <strong>{money(completedOrder.totalAmount)}</strong>
           </p>
           <div className="checkout-success-actions">
+            {user?.role === 'CUSTOMER' && (
+              <Link className="button" to="/my-orders">
+                View my orders
+              </Link>
+            )}
             <Link className="button" to={`/orders?order=${completedOrder.orderId}`}>
               Track your order <FiArrowRight />
             </Link>
@@ -493,6 +539,8 @@ export function CheckoutPage() {
             </Link>
           </div>
         </div>
+      ) : bagBusy ? (
+        <p role="status">Loading your bag…</p>
       ) : !bag.length ? (
         <EmptyState title="Start with a little care" action={<ShopLink />}>
           Add an essential to your bag before preparing checkout.
@@ -646,7 +694,12 @@ export function CheckoutPage() {
                       >
                         <FiArrowLeft /> Edit details
                       </button>
-                      <PaymentForm onPlaceOrder={placeOrder} onProcessingChange={setPlacing} />
+                      <PaymentForm
+                        total={total}
+                        requestId={requestId}
+                        onPlaceOrder={placeOrder}
+                        onProcessingChange={setPlacing}
+                      />
                     </>
                   </div>
                 )}
@@ -797,6 +850,28 @@ export function OrdersPage() {
           </div>
           {date && !Number.isNaN(date.getTime()) && (
             <p>Placed {date.toLocaleDateString('en-ZA', { dateStyle: 'long' })}</p>
+          )}
+          {order.payment && (
+            <div className="payment-receipt-details">
+              <div className="summary-line">
+                <span>Payment method</span>
+                <strong>{paymentMethodLabels[order.payment.method]}</strong>
+              </div>
+              <div className="summary-line">
+                <span>Payment status</span>
+                <strong>
+                  {order.payment.status === 'SUCCESSFUL'
+                    ? 'Complete'
+                    : order.payment.status === 'FAILED'
+                      ? 'Unsuccessful'
+                      : 'Awaiting confirmation'}
+                </strong>
+              </div>
+              <div className="summary-line">
+                <span>Payment reference</span>
+                <strong>{order.payment.reference}</strong>
+              </div>
+            </div>
           )}
           {order.orderItems.map((item) => (
             <div className="summary-line" key={item.orderItemId}>

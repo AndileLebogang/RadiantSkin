@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@org.junit.jupiter.api.TestInstance(org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class CartControllerTest {
@@ -45,6 +46,9 @@ class CartControllerTest {
 
     @Test
     void a_create() {
+        customer = restTemplate.postForEntity("/customer/create", java.util.Map.of("firstName", customer.getFirstName(), "lastName", customer.getLastName(), "email", "fixture-" + java.util.UUID.randomUUID() + "@example.test", "password", "Password123", "phoneNumber", customer.getPhoneNumber()), Customer.class).getBody();
+        cart.setCustomer(customer);
+        cart.setCartId(null);
 
         ResponseEntity<Cart> response =
                 restTemplate.postForEntity(
@@ -54,6 +58,7 @@ class CartControllerTest {
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
+        cart.setCartId(response.getBody().getCartId());
     }
 
     @Test

@@ -27,7 +27,7 @@ class CustomerServiceTest {
         customer = CustomerFactory.createCustomer(
                 "John",
                 "Doe",
-                "john@gmail.com",
+                "john-" + java.util.UUID.randomUUID() + "@example.test",
                 "Password123",
                 "0821234567"
         );

@@ -17,8 +17,12 @@ public class AccountSession {
     }
 
     public void start(HttpServletRequest request, User user) {
+        HttpSession previous = request.getSession(false);
+        Object guestCart = previous != null && previous.getAttribute(USER_ID) == null
+                ? previous.getAttribute(StorefrontCartService.SESSION_CART) : null;
         end(request);
         HttpSession session = request.getSession(true);
+        if (guestCart != null) session.setAttribute(StorefrontCartService.SESSION_CART, guestCart);
         session.setAttribute(USER_ID, user.getUserId());
         session.setMaxInactiveInterval(30 * 60);
     }

@@ -25,7 +25,7 @@ class AdminServiceTest {
         Admin admin = AdminFactory.createAdmin(
                 "Naledi",
                 "Molefe",
-                "naledi@gmail.com",
+                "naledi-" + java.util.UUID.randomUUID() + "@example.test",
                 "Password123",
                 "EMP001"
         );
@@ -44,7 +44,7 @@ class AdminServiceTest {
         Admin admin = AdminFactory.createAdmin(
                 "Naledi",
                 "Molefe",
-                "naledi2@gmail.com",
+                "naledi2-" + java.util.UUID.randomUUID() + "@example.test",
                 "Password123",
                 "EMP002"
         );
@@ -65,7 +65,7 @@ class AdminServiceTest {
         Admin admin = AdminFactory.createAdmin(
                 "Naledi",
                 "Molefe",
-                "naledi3@gmail.com",
+                "naledi3-" + java.util.UUID.randomUUID() + "@example.test",
                 "Password123",
                 "EMP003"
         );
@@ -91,7 +91,7 @@ class AdminServiceTest {
         Admin admin = AdminFactory.createAdmin(
                 "Naledi",
                 "Molefe",
-                "naledi4@gmail.com",
+                "naledi4-" + java.util.UUID.randomUUID() + "@example.test",
                 "Password123",
                 "EMP004"
         );

@@ -31,6 +31,17 @@ class AdminRegistrationTest {
     @Autowired AdminRepository admins;
     @Autowired CustomerService customers;
 
+    @Test
+    void defaultPreviewOriginCanRegisterButUnknownOriginsAreRejected() throws Exception {
+        mvc.perform(options("/admin/register").header("Origin", "http://localhost:4173")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:4173"));
+        mvc.perform(options("/admin/register").header("Origin", "https://unknown.example")
+                        .header("Access-Control-Request-Method", "POST"))
+                .andExpect(status().isForbidden());
+    }
+
     Map<String, Object> input(String email) {
         return Map.of("firstName", " Sam ", "lastName", "Mokoena", "email", email,
                 "employeeNumber", "EMP-17", "password", "SchoolStaff123", "userId", 999999,
